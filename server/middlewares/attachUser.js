@@ -6,6 +6,8 @@ export const attachUser = async (req, res, next) => {
 
     let user = await User.findOne({ firebaseUid: uid });
 
+    // console.log("🔥 attachUser hit");
+    // console.log("firebaseUser:", req.firebaseUser);
     if (!user) {
       user = await User.create({
         firebaseUid: uid,

@@ -3,15 +3,21 @@ import Membership from "../models/Membership.js";
 export const requireStoreAccess = (...allowedRoles) => {
   return async (req, res, next) => {
     try {
+
+      
+
+
+// const storeId = req.query.storeId;
       const storeId =
         req.params.storeId ||
         req.body.storeId ||
         req.query.storeId;
-console.log("storeId from request:", storeId);
+
       if (!storeId) {
         return res.status(400).json({ message: "storeId is required" });
       }
-console.log("Checking store access for user:", req.user.id, "storeId:", storeId);
+
+
       const membership = await Membership.findOne({
         userId: req.user.id,
         storeId,

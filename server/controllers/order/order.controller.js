@@ -1,5 +1,6 @@
 import Order from "../../models/Order.js";
 import Store from "../../models/Store.js";
+import Customer from "../../models/Customer.js";
 
 export const createOrder = async (req, res) => {
   try {
@@ -10,7 +11,7 @@ export const createOrder = async (req, res) => {
     const storeId = req.storeId;
 
     const {
-      customerId,       // must be a valid Customer ObjectId
+      // customerId,       // must be a valid Customer ObjectId
       customer,         // { name, phone } for shippingAddress
       address,
       city,
@@ -22,6 +23,11 @@ export const createOrder = async (req, res) => {
       notes,
     } = req.body;
 
+    // return res.status(200).json({
+    //   message: "Received order data",
+    //   customer: req.body.customer,
+    // });
+    console.log(customer.name);
     // ─────────────────────────────
     // VALIDATION
     // ─────────────────────────────
@@ -72,17 +78,33 @@ export const createOrder = async (req, res) => {
     const orderNumber =
       "ORD-" + Date.now() + "-" + Math.floor(Math.random() * 1000);
 
+
+    let customerId = null; // Initialize customerId to null
+    const existingCustomer = await Customer.findOne({ phone: customer.phone, storeId });
+    customerId = existingCustomer ? existingCustomer._id : null;
+
+    if (!existingCustomer) {
+      const newCustomer = await Customer.create({
+        storeId,
+        fullName: customer.name,
+        phone: customer.phone,
+        address,
+        city,
+        area,
+        postalCode,
+      });
+
+      // Optionally, you can link the new customer to the order by setting customerId
+      customerId = newCustomer._id; // Uncomment if you want to use this customerId in the order
+    }
+
     // ─────────────────────────────
     // CREATE ORDER
     // ─────────────────────────────
-console.log(paymentMethod)
     const order = await Order.create({
       storeId,
-    //   customerId,                   // required ObjectId ref
-
+      customerId,                   // required ObjectId ref
       orderNumber,
-
-      // ✅ Fix 4: nested shippingAddress, not flat fields
       shippingAddress: {
         fullName: customer.name,
         phone: customer.phone,
@@ -128,5 +150,53 @@ console.log(paymentMethod)
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+
+
+
+export const getAllOrders = async (req, res) => {
+  try {
+    console.log("Get All Orders - Query Params:", req.query);
+    const { storeId } = req.query;
+    console.log("Fetching orders for storeId:", storeId);
+
+    if (!storeId) {
+      return res.status(400).json({
+        success: false,
+        message: "Store ID is required",
+      });
+    }
+
+    const orders = await Order.find({ storeId })
+      .populate({
+        path: "customerId",
+        select: "customerId name phone email riskLevel",
+      })
+      // .populate({
+      //   path: "courierId",
+      //   select: "name",
+      // })
+      // .populate({
+      //   path: "assignedTo",
+      //   select: "name email",
+      // })
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: orders.length,
+      orders,
+    });
+  } catch (error) {
+    console.error("Get Orders Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch orders",
+      error: error.message,
+    });
   }
 };

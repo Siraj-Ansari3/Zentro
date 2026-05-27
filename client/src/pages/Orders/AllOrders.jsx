@@ -226,7 +226,7 @@ function CreateOrderModal({ onClose, onCreated }) {
                 <span className="w-4 h-px bg-white/10" />Customer Details
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-               {/* CustomerId */}
+                {/* CustomerId */}
                 {/* <FormField label="Customer ID" required error={errors.customerId}>
                   <Input
                     placeholder="ObjectId from DB"
@@ -625,7 +625,9 @@ const COLUMNS = [
 ];
 
 export default function AllOrders() {
-  const [orders, setOrders] = useState(MOCK_ORDERS);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState(new Set());
@@ -634,6 +636,123 @@ export default function AllOrders() {
   const [perPage, setPerPage] = useState(10);
   const [drawerOrder, setDrawerOrder] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
+
+  const { activeStore } = useStore();
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await api.get("/order/get_all_orders", {
+        params: {
+          storeId: activeStore?.storeId,
+        }
+      });
+
+      const fetchedOrders = response?.data?.orders || [];
+
+      // transform backend data into frontend table shape
+      const formattedOrders = fetchedOrders.map((order) => ({
+        id: order.orderNumber,
+
+        customer: {
+          name: order.customerId?.name || "Unknown Customer",
+          phone: order.customerId?.phone || "N/A",
+          email: order.customerId?.email || "",
+        },
+
+        city: order.shippingAddress?.city || "Unknown",
+
+        items: order.items?.length || 0,
+
+        amount: order.totalAmount || 0,
+
+        payment:
+          order.paymentMethod?.toUpperCase() === "COD"
+            ? "COD"
+            : "PREPAID",
+
+        risk: order.customerId?.riskLevel || "unknown",
+
+        courier: order.courierId?.name || null,
+
+        shipStatus: (() => {
+          switch (order.status) {
+            case "pending_verification":
+              return "Pending";
+
+            case "packed":
+              return "Picked Up";
+
+            case "shipped":
+            case "in_transit":
+              return "In Transit";
+
+            case "delivered":
+              return "Delivered";
+
+            case "failed_delivery":
+              return "Failed";
+
+            case "returned":
+              return "Returned";
+
+            default:
+              return "Pending";
+          }
+        })(),
+
+        orderStatus: (() => {
+          switch (order.status) {
+            case "pending_verification":
+              return "Pending Verification";
+
+            case "packed":
+              return "Packed";
+
+            case "shipped":
+            case "in_transit":
+              return "Shipped";
+
+            case "delivered":
+              return "Delivered";
+
+            case "failed_delivery":
+              return "Failed Delivery";
+
+            case "returned":
+              return "Returned";
+
+            default:
+              return "Pending Verification";
+          }
+        })(),
+
+        createdAt: new Date(order.createdAt).toLocaleDateString(),
+
+        trackingId: order.trackingNumber || null,
+
+        raw: order,
+      }));
+
+      setOrders(formattedOrders);
+    } catch (err) {
+      console.error(err);
+
+      setError(
+        err?.response?.data?.message || "Failed to fetch orders"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeStore?.storeId) {
+      fetchOrders();
+    }
+  }, [activeStore]);
 
   const filtered = useMemo(() => {
     return orders.filter(o => {
@@ -732,7 +851,7 @@ export default function AllOrders() {
       )}
 
       {/* Table */}
-      <div className="bg-[#13151f] border border-white/[0.06] rounded-2xl overflow-hidden">
+      {/* <div className="bg-[#13151f] border border-white/[0.06] rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px]">
             <thead>
@@ -775,7 +894,106 @@ export default function AllOrders() {
           </table>
         </div>
         <Pagination page={page} total={filtered.length} perPage={perPage} onPage={setPage} onPerPage={setPerPage} />
-      </div>
+      </div> */}
+
+
+
+      <tbody>
+        {loading ? (
+          <tr>
+            <td colSpan={12}>
+              <div className="flex flex-col items-center justify-center py-20">
+                <Loader2
+                  size={30}
+                  className="animate-spin text-amber-400 mb-3"
+                />
+
+                <p className="text-sm text-slate-400">
+                  Loading orders...
+                </p>
+              </div>
+            </td>
+          </tr>
+        ) : error ? (
+          <tr>
+            <td colSpan={12}>
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <AlertTriangle
+                  size={30}
+                  className="text-red-400 mb-3"
+                />
+
+                <h3 className="text-base font-bold text-white mb-1">
+                  Failed to load orders
+                </h3>
+
+                <p className="text-sm text-slate-500 mb-4">
+                  {error}
+                </p>
+
+                <button
+                  onClick={fetchOrders}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-400 text-black text-sm font-semibold hover:bg-amber-300 transition-colors"
+                >
+                  <RefreshCcw size={14} />
+                  Retry
+                </button>
+              </div>
+            </td>
+          </tr>
+        ) : paginated.length === 0 ? (
+          <tr>
+            <td colSpan={12}>
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mb-4">
+                  <Inbox size={28} className="text-slate-600" />
+                </div>
+
+                <h3
+                  className="text-base font-bold text-white mb-1"
+                  style={{ fontFamily: "'Syne',sans-serif" }}
+                >
+                  No orders found
+                </h3>
+
+                <p className="text-sm text-slate-600 mb-5">
+                  Try adjusting your search or filters.
+                </p>
+
+                <button
+                  onClick={() => setShowCreate(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-400 text-black text-sm font-semibold hover:bg-amber-300 transition-colors"
+                >
+                  <Plus size={14} />
+                  Add Order
+                </button>
+              </div>
+            </td>
+          </tr>
+        ) : (
+          paginated.map((order) => (
+            <TableRow
+              key={order.id}
+              order={order}
+              selected={selected.has(order.id)}
+              onSelect={(id, checked) =>
+                setSelected((s) => {
+                  const n = new Set(s);
+
+                  checked ? n.add(id) : n.delete(id);
+
+                  return n;
+                })
+              }
+              onView={setDrawerOrder}
+            />
+          ))
+        )}
+      </tbody>
+
+
+
+
 
       {/* Modals */}
       <OrderDrawer order={drawerOrder} onClose={() => setDrawerOrder(null)} />
@@ -783,7 +1001,7 @@ export default function AllOrders() {
         <CreateOrderModal
           onClose={() => setShowCreate(false)}
           onCreated={() => {
-            // In real app, refetch orders. Here we just close.
+            fetchOrders();
             setShowCreate(false);
           }}
         />
