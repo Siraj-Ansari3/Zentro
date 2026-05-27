@@ -17,7 +17,7 @@ const orderSchema = new mongoose.Schema(
     customerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Customer",
-      required: true,
+    //   required: true,
       index: true,
     },
 
@@ -89,7 +89,7 @@ const orderSchema = new mongoose.Schema(
     // ─────────────────────────────────────
     paymentMethod: {
       type: String,
-      enum: ["cod", "prepaid", "bank_transfer"],
+      enum: ["COD", "prepaid", "bank_transfer"],
       default: "cod",
     },
 

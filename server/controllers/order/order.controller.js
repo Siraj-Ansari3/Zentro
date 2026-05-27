@@ -26,11 +26,11 @@ export const createOrder = async (req, res) => {
     // VALIDATION
     // ─────────────────────────────
 
-    if (!customerId) {
-      return res.status(400).json({
-        message: "customerId is required",
-      });
-    }
+    // if (!customerId) {
+    //   return res.status(400).json({
+    //     message: "customerId is required",
+    //   });
+    // }
 
     if (!customer?.name || !customer?.phone || !address) {
       return res.status(400).json({
@@ -75,10 +75,10 @@ export const createOrder = async (req, res) => {
     // ─────────────────────────────
     // CREATE ORDER
     // ─────────────────────────────
-
+console.log(paymentMethod)
     const order = await Order.create({
       storeId,
-      customerId,                   // required ObjectId ref
+    //   customerId,                   // required ObjectId ref
 
       orderNumber,
 

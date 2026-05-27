@@ -7,7 +7,7 @@ export const requireStoreAccess = (...allowedRoles) => {
         req.params.storeId ||
         req.body.storeId ||
         req.query.storeId;
-
+console.log("storeId from request:", storeId);
       if (!storeId) {
         return res.status(400).json({ message: "storeId is required" });
       }
