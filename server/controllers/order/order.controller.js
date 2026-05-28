@@ -179,10 +179,10 @@ export const getAllOrders = async (req, res) => {
       //   path: "courierId",
       //   select: "name",
       // })
-      // .populate({
-      //   path: "assignedTo",
-      //   select: "name email",
-      // })
+      .populate({
+        path: "assignedTo",
+        select: "displayName email",
+      })
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
