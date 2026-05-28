@@ -28,6 +28,12 @@ const orderSchema = new mongoose.Schema(
       index: true,
     },
 
+    trackingNumber: {
+      type: String,
+      default: "",
+      index: true,
+    },
+
     assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

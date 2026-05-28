@@ -173,7 +173,7 @@ export const getAllOrders = async (req, res) => {
     const orders = await Order.find({ storeId })
       .populate({
         path: "customerId",
-        select: "customerId name phone email riskLevel",
+        select: "customerId name phone email riskLevel trackingNumber", 
       })
       // .populate({
       //   path: "courierId",
