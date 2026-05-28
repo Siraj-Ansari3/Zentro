@@ -434,7 +434,7 @@ const TIMELINE = [
   { event: "Payment Confirmed", time: "Jan 22, 10:15 AM", done: true },
   { event: "Picked Up by Courier", time: "Jan 22, 02:30 PM", done: true },
   { event: "In Transit", time: "Jan 23, 09:00 AM", done: true },
-  { event: "Out for Delivery", time: "Jan 24, 08:45 AM", done: false },
+  { event: "Out for Delivery", time: "Jan 24, 08:45 AM", done: true },
   { event: "Delivered", time: "Pending", done: false },
 ];
 
@@ -466,7 +466,9 @@ function OrderDrawer({ order, onClose }) {
               </div>
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-xs text-slate-400"><Phone size={12} className="text-slate-600" />{order.customer.phone}</div>
-                <div className="flex items-center gap-2 text-xs text-slate-400"><Mail size={12} className="text-slate-600" />{order.customer.email}</div>
+                {order.customer.email && (
+                  <div className="flex items-center gap-2 text-xs text-slate-400"><Mail size={12} className="text-slate-600" />{order.customer.email}</div>
+                )}
                 <div className="flex items-center gap-2 text-xs text-slate-400"><MapPin size={12} className="text-slate-600" />{order.city}, Pakistan</div>
               </div>
             </div>
@@ -652,14 +654,15 @@ export default function AllOrders() {
 
       const fetchedOrders = response?.data?.orders || [];
 
+      console.log("Fetched orders:", fetchedOrders);
       // transform backend data into frontend table shape
       const formattedOrders = fetchedOrders.map((order) => ({
         id: order.orderNumber,
 
         customer: {
-          name: order.customerId?.name || "Unknown Customer",
-          phone: order.customerId?.phone || "N/A",
-          email: order.customerId?.email || "",
+          name: order?.shippingAddress?.fullName || "Unknown Customer",
+          phone: order?.shippingAddress?.phone || "N/A",
+          email: order?.shippingAddress?.email || "",
         },
 
         city: order.shippingAddress?.city || "Unknown",
