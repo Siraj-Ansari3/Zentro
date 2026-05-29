@@ -4,6 +4,7 @@ import AllOrders from "../pages/orders/AllOrders";
 import Customers from "../pages/customers/CustomerProfiles";
 import CourierDashboard from "../pages/courier/CourierDashboard";
 import CourierPerformance from "../pages/courier/CourierPerformance";
+import CourierIntegration from "../pages/integrations/CourierIntegration";
 
 function Placeholder({ title }) {
   return (
@@ -82,7 +83,7 @@ export default function AppRouter() {
       <Route path="/teams/activity" element={<Placeholder title="Activity Logs" />} />
 
       {/* Integrations */}
-      <Route path="/integrations/courier"  element={<Placeholder title="Courier Integrations" />} />
+      <Route path="/integrations/courier"  element={<CourierIntegration />} />
       <Route path="/integrations/whatsapp" element={<Placeholder title="WhatsApp Integration" />} />
       <Route path="/integrations/api-keys" element={<Placeholder title="API Keys" />} />
       <Route path="/integrations/webhooks" element={<Placeholder title="Webhooks" />} />
