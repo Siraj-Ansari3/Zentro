@@ -8,26 +8,32 @@ import { testCourierConnection } from "../../middlewares/courier/testCourierConn
 import { getStoreCourierIntegrations } from "../../controllers/courier/getStoreCourierIntegrations.js";
 import { connectCourier } from "../../controllers/courier/connectCourier.js";
 import { disconnectCourier } from "../../controllers/courier/disconnectCourier.js";
+import { requireStoreAccess } from "../../middlewares/requireStoreAccess.js";
 
 const router = express.Router();
 
 router.post(
   "/connect",
+  verifyAuth,
+  attachUser,
+  requireStoreAccess("super_admin", "admin"),
   testCourierConnection,
   connectCourier
 );
 
 router.get(
   "/integrations",
-  // verifyAuth,
-  // attachUser,
+  verifyAuth,
+  attachUser,
+  requireStoreAccess("super_admin", "admin"),
   getStoreCourierIntegrations
 );
 
 router.post(
   "/disconnect",
-  // verifyAuth,
-  // attachUser,
+  verifyAuth,
+  attachUser,
+  requireStoreAccess("super_admin", "admin"),
   disconnectCourier
 );
 

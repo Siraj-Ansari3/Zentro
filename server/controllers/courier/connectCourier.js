@@ -73,7 +73,6 @@ export const connectCourier = async (req, res) => {
       integration,
     });
   } catch (error) {
-    console.error("Connect Courier Error:", error);
 
     return res.status(500).json({
       success: false,
