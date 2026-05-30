@@ -7,12 +7,14 @@ export const connectCourier = async (req, res) => {
       storeId,
       courier,
 
-      apiKey,
-      apiSecret,
-      accountNumber,
-      merchantId,
+      // apiSecret,
+      // accountNumber,
+      // merchantId,
     } = req.body;
 
+    const { apiKey } = req.body.credentials || {};
+    console.log("API Key:", apiKey);
+    console.log("Courier to connect:", courier);
     // ─────────────────────────────────────
     // VALIDATION
     // ─────────────────────────────────────
@@ -24,11 +26,14 @@ export const connectCourier = async (req, res) => {
       });
     }
 
+    const cleanCourierName = courier.trim();
+
+
     // ─────────────────────────────────────
     // CHECK COURIER EXISTS
     // ─────────────────────────────────────
-
-    const existingCourier = await Courier.findOne({ name: courier });
+    const existingCourier = await Courier.findOne({ name: cleanCourierName });
+    // console.log(existingCourier)
 
     if (!existingCourier) {
       return res.status(404).json({
