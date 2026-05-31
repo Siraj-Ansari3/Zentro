@@ -15,16 +15,7 @@ import { useStore } from "../../context/StoreContext";
 const COURIERS = ["Leopards", "TCS", "Trax", "M&P", "PostEx"];
 const CITIES = ["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Peshawar", "Quetta", "Multan"];
 
-const MOCK_ORDERS = [
-  { id: "ORD-7821", customer: { name: "Aisha Malik", phone: "0300-1234567", email: "aisha@gmail.com" }, city: "Karachi", items: 2, amount: 3400, payment: "COD", risk: "high", courier: "Leopards", shipStatus: "In Transit", orderStatus: "Shipped", createdAt: "2024-01-22", staff: "Raza K.", trackingId: "LP-88291" },
-  { id: "ORD-7820", customer: { name: "Bilal Raza", phone: "0321-9876543", email: "bilal@yahoo.com" }, city: "Lahore", items: 1, amount: 1200, payment: "COD", risk: "medium", courier: "TCS", shipStatus: "Pending", orderStatus: "Pending Verification", createdAt: "2024-01-22", staff: "Sara M.", trackingId: null },
-  { id: "ORD-7819", customer: { name: "Fatima Noor", phone: "0333-5551234", email: "fatima@mail.com" }, city: "Islamabad", items: 4, amount: 8750, payment: "Prepaid", risk: "low", courier: "Trax", shipStatus: "Out for Delivery", orderStatus: "Shipped", createdAt: "2024-01-21", staff: "Omar T.", trackingId: "TX-44120" },
-  { id: "ORD-7818", customer: { name: "Hassan Sheikh", phone: "0311-7778899", email: "hassan@live.com" }, city: "Rawalpindi", items: 3, amount: 5100, payment: "COD", risk: "high", courier: "M&P", shipStatus: "Failed", orderStatus: "Failed Delivery", createdAt: "2024-01-21", staff: "Raza K.", trackingId: "MP-33901" },
-  { id: "ORD-7817", customer: { name: "Sana Tariq", phone: "0345-2223344", email: "sana@gmail.com" }, city: "Faisalabad", items: 1, amount: 950, payment: "COD", risk: "low", courier: "Leopards", shipStatus: "Delivered", orderStatus: "Delivered", createdAt: "2024-01-20", staff: "Nadia F.", trackingId: "LP-77003" },
-  { id: "ORD-7816", customer: { name: "Umar Farooq", phone: "0312-4445566", email: "umar@hotmail.com" }, city: "Karachi", items: 6, amount: 12400, payment: "Prepaid", risk: "low", courier: "TCS", shipStatus: "Picked Up", orderStatus: "Packed", createdAt: "2024-01-20", staff: "Omar T.", trackingId: "TC-22841" },
-  { id: "ORD-7815", customer: { name: "Zara Hussain", phone: "0322-6667788", email: "zara@gmail.com" }, city: "Peshawar", items: 2, amount: 2300, payment: "COD", risk: "medium", courier: "PostEx", shipStatus: "In Transit", orderStatus: "Shipped", createdAt: "2024-01-19", staff: "Sara M.", trackingId: "PX-19203" },
-  { id: "ORD-7812", customer: { name: "Adnan Baig", phone: "0343-3334455", email: "adnan@yahoo.com" }, city: "Quetta", items: 5, amount: 7200, payment: "COD", risk: "medium", courier: "M&P", shipStatus: "Returned", orderStatus: "Returned", createdAt: "2024-01-18", staff: "Raza K.", trackingId: "MP-10988" },
-];
+
 
 const STATUS_TABS = [
   { key: "all", label: "All", color: "slate" },
@@ -507,9 +498,10 @@ function OrderDrawer({ order, onClose }) {
 // ─────────────────────────────────────────────────────────────
 // ACTION DROPDOWN
 // ─────────────────────────────────────────────────────────────
-function ActionDropdown({ order, onView }) {
+function ActionDropdown({ order, onView, onAssignCourier }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+  console.log(order)
   useEffect(() => {
     const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) };
     document.addEventListener("mousedown", h);
@@ -518,7 +510,10 @@ function ActionDropdown({ order, onView }) {
   const actions = [
     { label: "View Order", icon: Eye, onClick: () => { onView(order); setOpen(false) } },
     { label: "Edit Order", icon: Edit3, onClick: () => setOpen(false) },
-    { label: "Assign Courier", icon: Truck, onClick: () => setOpen(false) },
+    { label: "Assign Courier", icon: Truck, onClick: async () => { setOpen(false);
+        await onAssignCourier(order);
+      }
+    },
     { label: "Print Label", icon: Printer, onClick: () => setOpen(false) },
     { divider: true },
     { label: "Cancel Order", icon: XCircle, danger: true, onClick: () => setOpen(false) },
@@ -542,7 +537,7 @@ function ActionDropdown({ order, onView }) {
 // ─────────────────────────────────────────────────────────────
 // TABLE ROW
 // ─────────────────────────────────────────────────────────────
-function TableRow({ order, selected, onSelect, onView }) {
+function TableRow({ order, selected, onSelect, onView, onAssignCourier }) {
   return (
     <tr onClick={() => onView(order)} className={`border-t border-white/[0.04] cursor-pointer transition-colors group ${selected ? "bg-amber-400/[0.05]" : "hover:bg-white/[0.025]"} ${order.risk === "high" ? "border-l-2 border-l-red-400/40" : ""}`}>
       <td className="pl-4 pr-2 py-3" onClick={e => e.stopPropagation()}>
@@ -572,7 +567,11 @@ function TableRow({ order, selected, onSelect, onView }) {
       <td className="px-3 py-3">{order.courier ? <span className="text-xs text-slate-300 font-medium">{order.courier}</span> : <span className="text-xs text-slate-600 italic">Unassigned</span>}</td>
       <td className="px-3 py-3"><ShipBadge status={order.shipStatus} /></td>
       <td className="px-3 py-3"><StatusBadge status={order.orderStatus} /></td>
-      <td className="px-3 py-3" onClick={e => e.stopPropagation()}><ActionDropdown order={order} onView={onView} /></td>
+      <td className="px-3 py-3" onClick={e => e.stopPropagation()}><ActionDropdown
+        order={order}
+        onView={onView}
+        onAssignCourier={onAssignCourier}
+      /></td>
     </tr>
   );
 }
@@ -750,6 +749,32 @@ export default function AllOrders() {
       setLoading(false);
     }
   };
+
+
+  const assignCourier = async (order) => {
+    try {
+      const response = await api.post("/order/assign_order", {
+        courier: "PostEx",
+        orderNumber: order.id,
+        storeId: activeStore?.storeId
+      });
+
+      alert(
+        response.data.message ||
+        "Order assigned successfully"
+      );
+
+      // fetchOrders(); // refresh table
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        error?.response?.data?.message ||
+        "Failed to assign courier"
+      );
+    }
+  };
+
 
   useEffect(() => {
     if (activeStore?.storeId) {
@@ -979,16 +1004,15 @@ export default function AllOrders() {
               key={order.id}
               order={order}
               selected={selected.has(order.id)}
-              onSelect={(id, checked) =>
-                setSelected((s) => {
-                  const n = new Set(s);
+              onSelect={(id, checked) => {
+                const n = new Set(selected);
 
-                  checked ? n.add(id) : n.delete(id);
+                checked ? n.add(id) : n.delete(id);
 
-                  return n;
-                })
-              }
+                setSelected(n);
+              }}
               onView={setDrawerOrder}
+              onAssignCourier={assignCourier}
             />
           ))
         )}

@@ -1,6 +1,8 @@
 import Order from "../../models/Order.js";
 import Store from "../../models/Store.js";
 import Customer from "../../models/Customer.js";
+import axios from "axios";
+import StoreCourierIntegration from "../../models/StoreCourierIntegration.js";
 
 export const createOrder = async (req, res) => {
   try {
@@ -11,7 +13,6 @@ export const createOrder = async (req, res) => {
     const storeId = req.storeId;
 
     const {
-      // customerId,       // must be a valid Customer ObjectId
       customer,         // { name, phone } for shippingAddress
       address,
       city,
@@ -23,21 +24,11 @@ export const createOrder = async (req, res) => {
       notes,
     } = req.body;
 
-    // return res.status(200).json({
-    //   message: "Received order data",
-    //   customer: req.body.customer,
-    // });
+
     console.log(customer.name);
     // ─────────────────────────────
     // VALIDATION
     // ─────────────────────────────
-
-    // if (!customerId) {
-    //   return res.status(400).json({
-    //     message: "customerId is required",
-    //   });
-    // }
-
     if (!customer?.name || !customer?.phone || !address) {
       return res.status(400).json({
         message: "Customer information or address is incomplete",
@@ -77,6 +68,11 @@ export const createOrder = async (req, res) => {
 
     const orderNumber =
       "ORD-" + Date.now() + "-" + Math.floor(Math.random() * 1000);
+
+
+
+
+
 
 
     let customerId = null; // Initialize customerId to null
@@ -173,7 +169,7 @@ export const getAllOrders = async (req, res) => {
     const orders = await Order.find({ storeId })
       .populate({
         path: "customerId",
-        select: "customerId name phone email riskLevel trackingNumber", 
+        select: "customerId name phone email riskLevel trackingNumber",
       })
       // .populate({
       //   path: "courierId",

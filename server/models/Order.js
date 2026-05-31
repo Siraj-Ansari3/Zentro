@@ -17,7 +17,7 @@ const orderSchema = new mongoose.Schema(
     customerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Customer",
-    //   required: true,
+      //   required: true,
       index: true,
     },
 
@@ -28,10 +28,20 @@ const orderSchema = new mongoose.Schema(
       index: true,
     },
 
+    courier: {
+      type: String,
+      default: "",
+    },
+
     trackingNumber: {
       type: String,
       default: "",
       index: true,
+    },
+
+    trackingUrl: {
+      type: String,
+      default: ""
     },
 
     assignedTo: {
@@ -39,6 +49,8 @@ const orderSchema = new mongoose.Schema(
       ref: "User",
       default: null,
     },
+
+    assignedAt: Date,
 
     // ─────────────────────────────────────
     // ORDER IDENTITY
@@ -69,6 +81,11 @@ const orderSchema = new mongoose.Schema(
       default: "manual",
     },
 
+    courierResponse: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+
     // ─────────────────────────────────────
     // ORDER STATUS
     // ─────────────────────────────────────
@@ -79,6 +96,7 @@ const orderSchema = new mongoose.Schema(
         "confirmed",
         "packed",
         "ready_to_ship",
+        "booked",
         "shipped",
         "in_transit",
         "delivered",
@@ -187,12 +205,6 @@ const orderSchema = new mongoose.Schema(
       address: String,
 
       postalCode: String,
-    },
-
-    trackingNumber: {
-      type: String,
-      default: "",
-      index: true,
     },
 
     // ─────────────────────────────────────
