@@ -96,6 +96,7 @@ const orderSchema = new mongoose.Schema(
         "confirmed",
         "packed",
         "ready_to_ship",
+        "assigned",
         "booked",
         "shipped",
         "in_transit",

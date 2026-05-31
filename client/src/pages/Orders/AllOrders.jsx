@@ -764,7 +764,7 @@ export default function AllOrders() {
         "Order assigned successfully"
       );
 
-      // fetchOrders(); // refresh table
+      fetchOrders(); // refresh table
     } catch (error) {
       console.error(error);
 

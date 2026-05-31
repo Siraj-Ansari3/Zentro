@@ -115,7 +115,7 @@ export const createOrder = async (req, res) => {
       paymentMethod,
 
       subtotal,
-      shippingFee,                  // ✅ Fix 5: correct schema field name
+      shippingFee,                  
       totalAmount,
 
       ...(notes?.length && {

@@ -95,7 +95,7 @@ export const assignOrder = async (req, res) => {
             const trackingNumber = response.data.dist.trackingNumber;
             const trackingUrl =
                 `https://tracking.postex.pk/tracking/${trackingNumber}`;
-            // Mark the order as booked and save the tracking number in your DB
+            // Mark the order as assigned and save the tracking number in your DB
             await Order.findOneAndUpdate(
                 { orderNumber, storeId },
                 {
@@ -104,7 +104,7 @@ export const assignOrder = async (req, res) => {
                     courierId,
                     courier: existingCourier.name,
                     assignedAt: new Date(),
-                    status: 'booked',
+                    status: 'assigned',
                     assignedTo: userId,
                     courierResponse: response.data,
                 }
