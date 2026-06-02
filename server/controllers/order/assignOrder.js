@@ -82,6 +82,7 @@ export const assignOrder = async (req, res) => {
         };
 
         // 6. Assign to PostEx via Axios
+        console.log("Calling URL:", `https://api.postex.pk/services/integration/api/order/v3/create-order`);
         const response = await axios.post(
             `https://api.postex.pk/services/integration/api/order/v3/create-order`,
             postExPayload,
