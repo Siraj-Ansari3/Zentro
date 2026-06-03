@@ -17,7 +17,7 @@ export const assignOrder = async (req, res) => {
             });
         }
 
-        // 2. fetch the Courier ID from the database
+        // 2. Fetch the Courier ID from the database
         const cleanCourierName = courier.trim();
         const existingCourier = await Courier.findOne({
             name: cleanCourierName
@@ -32,7 +32,7 @@ export const assignOrder = async (req, res) => {
 
         const courierId = existingCourier._id;
 
-        // 3. Fetch the Store's specific integration credentials using the resolved ID
+        // 3. Fetch the Store's specific integration credentials
         const connectedCourierInfo = await StoreCourierIntegration.findOne({
             storeId,
             courierId,
@@ -58,7 +58,6 @@ export const assignOrder = async (req, res) => {
             });
         }
 
-
         if (order.trackingNumber) {
             return res.status(400).json({
                 success: false,
@@ -66,37 +65,71 @@ export const assignOrder = async (req, res) => {
             });
         }
 
-        // 5. Construct PostEx Payload
+        // ─────────────────────────────────────────────────────────
+        // 5. DYNAMIC PICKUP ADDRESS RESOLUTION
+        // ─────────────────────────────────────────────────────────
+        // Try to grab it from the root of the document (or credentials as fallback)
+        let pickupAddressCode = connectedCourierInfo.pickupAddressCode || connectedCourierInfo.credentials?.pickupAddressCode;
+
+        // If it doesn't exist in the DB, fetch it from PostEx and save it
+        if (!pickupAddressCode) {
+            console.log("Pickup address not found in DB. Fetching from PostEx...");
+            
+            const addressResponse = await axios.get(
+                "https://api.postex.pk/services/integration/api/order/v1/get-merchant-address",
+                { headers: { token: apiKey } }
+            );
+
+            const addresses = addressResponse.data?.dist || [];
+            
+            if (addresses.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "No pickup address configured in this PostEx account."
+                });
+            }
+
+            // Find the Default Address, fallback to the first one if no default is explicitly marked
+            const defaultAddress = addresses.find(addr => addr.addressType === "Default Address") || addresses[0];
+            pickupAddressCode = defaultAddress.addressCode;
+
+            // Save the newly found code back to the DB at the root level
+            await StoreCourierIntegration.findByIdAndUpdate(connectedCourierInfo._id, {
+                $set: { pickupAddressCode: pickupAddressCode }
+            });
+            
+            console.log(`Saved new pickupAddressCode (${pickupAddressCode}) to database.`);
+        }
+
+        // ─────────────────────────────────────────────────────────
+        // 6. Construct Payload & Create Order
+        // ─────────────────────────────────────────────────────────
         const postExPayload = {
             cityName: order.shippingAddress.city,
             customerName: order.shippingAddress.fullName,
             customerPhone: order.shippingAddress.phone,
             deliveryAddress: order.shippingAddress.address,
-            invoicePayment: 0,
+            invoicePayment: 0, // Reminder: Use order.totalAmount if doing Cash On Delivery
             invoiceDivision: 0,
-            pickupAddressCode: "001", // This should ideally come from your DB based on the store's pickup location
+            pickupAddressCode: pickupAddressCode, // Injected from DB or freshly fetched
             items: order.items?.length || 1,
             orderDetail: order.items?.map(i => i.name).join(", ") || "No details",
             orderRefNumber: orderNumber,
             orderType: "Normal"
         };
 
-        // 6. Assign to PostEx via Axios
-        console.log("Calling URL:", `https://api.postex.pk/services/integration/api/order/v3/create-order`);
         const response = await axios.post(
             `https://api.postex.pk/services/integration/api/order/v3/create-order`,
             postExPayload,
-            {
-                headers: { token: apiKey },
-            }
+            { headers: { token: apiKey } }
         );
 
         // 7. Handle PostEx Success
         if (response.data.statusCode === "200") {
             const trackingNumber = response.data.dist.trackingNumber;
-            const trackingUrl =
-                `https://tracking.postex.pk/tracking/${trackingNumber}`;
-            // Mark the order as assigned and save the tracking number in your DB
+            const trackingUrl = `https://tracking.postex.pk/tracking/${trackingNumber}`;
+            
+            // Update order with tracking info
             await Order.findOneAndUpdate(
                 { orderNumber, storeId },
                 {
@@ -118,7 +151,6 @@ export const assignOrder = async (req, res) => {
             });
         }
 
-        // Fallback for unexpected 200 OK responses with internal errors
         return res.status(400).json({
             success: false,
             message: `Failed to create order. ${existingCourier.name} responded with an error.`,
@@ -126,7 +158,6 @@ export const assignOrder = async (req, res) => {
         });
 
     } catch (error) {
-        // Handle Courier API Errors
         if (error.response) {
             console.error("Courier API Error:", error.response.data);
             return res.status(error.response.status).json({
@@ -136,7 +167,6 @@ export const assignOrder = async (req, res) => {
             });
         }
 
-        // Standard Server Error Fallback
         console.error("Assign Order System Error:", error.message);
         return res.status(500).json({
             success: false,

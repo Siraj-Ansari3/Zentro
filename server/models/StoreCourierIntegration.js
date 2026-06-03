@@ -19,6 +19,11 @@ const storeCourierIntegrationSchema = new mongoose.Schema(
       index: true,
     },
 
+    pickupAddressCode: {
+      type: String,
+      default: "",
+    },
+
     // ─────────────────────────────────────
     // CONNECTION STATUS
     // ─────────────────────────────────────

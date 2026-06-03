@@ -5,11 +5,7 @@ export const connectCourier = async (req, res) => {
   try {
     const {
       storeId,
-      courier,
-
-      // apiSecret,
-      // accountNumber,
-      // merchantId,
+      courier
     } = req.body;
 
     const { apiKey } = req.body.credentials || {};
