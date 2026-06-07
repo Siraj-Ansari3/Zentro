@@ -8,6 +8,7 @@ import storeRoutes from "./routes/store/store.routes.js";
 import dashboardRoutes from "./routes/dashboard/dashboard.routes.js";
 import orderRoutes from "./routes/order/order.routes.js";
 import courierRoutes from "./routes/courier/courier.routes.js";
+import requestsRoutes from "./routes/requests/requests.routes.js"; 
 import { verifyAuth } from "./middlewares/verifyAuth.js";
 import { attachUser } from "./middlewares/attachUser.js";
 
@@ -34,6 +35,7 @@ app.use("/stores", storeRoutes);
 app.use("/dashboard", dashboardRoutes);
 app.use("/order", orderRoutes);
 app.use("/courier", courierRoutes);
+app.use("/requests", requestsRoutes); // Importing the requests routes
 
 // app.post("/stores", (req, res) => {
 //   console.log("Received request to create store with data:", req.body);

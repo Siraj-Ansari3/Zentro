@@ -89,7 +89,7 @@ function ProtectedShell() {
 function PublicLoginRoute() {
   const { user, loading } = useAuth();
   if (loading) return <FullscreenLoader />;
-  if (user)    return <Navigate to="/" replace />;
+  // if (user)    return <Navigate to="/" replace />;
   return <Login />;
 }
 

@@ -52,6 +52,7 @@ import {
   ChevronRight,
   X,
   Zap,
+  FileText,
 } from "lucide-react";
 
 const navigation = [
@@ -161,6 +162,7 @@ const navigation = [
     items: [
       { label: "Team Members",            icon: Users,         to: "/teams/members" },
       { label: "Roles & Permissions",     icon: Shield,        to: "/teams/roles" },
+      { label: "Join Requests",           icon: FileText,      to: "/teams/join-requests" },
       { label: "Audit Logs",              icon: ScrollText,    to: "/teams/audit" },
       { label: "Activity Logs",           icon: Activity,      to: "/teams/activity" },
     ],

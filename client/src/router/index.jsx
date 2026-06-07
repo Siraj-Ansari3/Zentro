@@ -5,6 +5,7 @@ import Customers from "../pages/customers/CustomerProfiles";
 import CourierDashboard from "../pages/courier/CourierDashboard";
 import CourierPerformance from "../pages/courier/CourierPerformance";
 import CourierIntegration from "../pages/integrations/CourierIntegration";
+import JoinRequests from "../pages/teams/joinRequests";
 
 function Placeholder({ title }) {
   return (
@@ -79,6 +80,7 @@ export default function AppRouter() {
       {/* Teams */}
       <Route path="/teams/members"  element={<Placeholder title="Team Members" />} />
       <Route path="/teams/roles"    element={<Placeholder title="Roles & Permissions" />} />
+      <Route path="/teams/join-requests" element={<JoinRequests />} />
       <Route path="/teams/audit"    element={<Placeholder title="Audit Logs" />} />
       <Route path="/teams/activity" element={<Placeholder title="Activity Logs" />} />
 
