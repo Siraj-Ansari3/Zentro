@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { LogOut } from "lucide-react"; // Import the icon
 import { useAuth } from "../../context/AuthContext";
 import api from "../../api/axios";
 
 export default function StoreOnboarding() {
-  const { user, setUser } = useAuth();
+  // Destructure logOut from context
+  const { user, setUser, logOut } = useAuth();
   const navigate = useNavigate();
 
   // ─────────────────────────────────────────────
@@ -28,47 +30,54 @@ export default function StoreOnboarding() {
   const [success, setSuccess] = useState("");
 
   // ─────────────────────────────────────────────
-  // CREATE STORE
+  // HANDLERS
   // ─────────────────────────────────────────────
-const handleCreateStore = async () => {
-  setError("");
-  setSuccess("");
+  const handleLogout = async () => {
+    try {
+      await logOut();
+      navigate("/login", { replace: true });
+    } catch (err) {
+      console.error("Logout failed:", err);
+      setError("Failed to log out. Please try again.");
+    }
+  };
 
-  if (!storeName.trim()) {
-    setError("Store name is required");
-    return;
-  }
+  const handleCreateStore = async () => {
+    setError("");
+    setSuccess("");
 
-  try {
-    setCreating(true);
+    if (!storeName.trim()) {
+      setError("Store name is required");
+      return;
+    }
 
-    // 1. create store
-    await api.post("/stores", {
-      name: storeName,
-      description,
-    });
+    try {
+      setCreating(true);
 
-    setSuccess("Store created successfully!");
+      // 1. create store
+      await api.post("/stores", {
+        name: storeName,
+        description,
+      });
 
-    // 2. IMPORTANT: re-bootstrap user
-    const res = await api.get("/auth/bootstrap"); //triggers refresh of user and store data in contexts.
+      setSuccess("Store created successfully!");
 
-    // 3. update AuthContext manually (we fix context below)
-    setUser(res.data.user); //responsible for updating the user state and triggering the StoreContext to refetch memberships and set the active store accordingly. This is crucial for ensuring that the user sees the newly created store in their dashboard without needing to refresh the page.
+      // 2. IMPORTANT: re-bootstrap user
+      const res = await api.get("/auth/bootstrap"); 
 
-    // 4. navigate AFTER state update
-    navigate("/", { replace: true }); //responsible for redirecting to dashboard after store creation
+      // 3. update AuthContext manually
+      setUser(res.data.user); 
 
-  } catch (err) {
-    setError(err?.response?.data?.message || "Failed to create store");
-  } finally {
-    setCreating(false);
-  }
-};
+      // 4. navigate AFTER state update
+      navigate("/", { replace: true }); 
 
-  // ─────────────────────────────────────────────
-  // JOIN STORE
-  // ─────────────────────────────────────────────
+    } catch (err) {
+      setError(err?.response?.data?.message || "Failed to create store");
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const handleJoinStore = async () => {
     setError("");
     setSuccess("");
@@ -86,9 +95,7 @@ const handleCreateStore = async () => {
         requestedRole: role,
       });
 
-      setSuccess("Join request sent successfully!");
-
-      // do NOT auto redirect (waiting approval flow)
+      setSuccess("Join request sent successfully! Waiting for admin approval.");
       setStoreKey("");
 
     } catch (err) {
@@ -99,9 +106,22 @@ const handleCreateStore = async () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#080a12] flex items-center justify-center p-6">
-      <div className="w-full max-w-5xl">
+    <div className="min-h-screen bg-[#080a12] flex items-center justify-center p-6 relative">
+      
+      {/* ───────────────────────────────
+          TOP RIGHT ACTIONS
+      ─────────────────────────────── */}
+      <div className="absolute top-6 right-6">
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-slate-400 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white transition-colors"
+        >
+          <LogOut size={16} />
+          Log Out
+        </button>
+      </div>
 
+      <div className="w-full max-w-5xl">
         {/* HEADER */}
         <div className="text-center mb-10">
           <h1 className="text-2xl font-bold text-white">
@@ -114,13 +134,13 @@ const handleCreateStore = async () => {
 
         {/* ERROR / SUCCESS */}
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+          <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm text-center">
             {error}
           </div>
         )}
 
         {success && (
-          <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm">
+          <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm text-center">
             {success}
           </div>
         )}
@@ -141,20 +161,20 @@ const handleCreateStore = async () => {
                 value={storeName}
                 onChange={(e) => setStoreName(e.target.value)}
                 placeholder="Store name"
-                className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm outline-none"
+                className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-amber-400/50 transition-colors"
               />
 
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Description (optional)"
-                className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm outline-none resize-none h-24"
+                className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm outline-none resize-none h-24 focus:border-amber-400/50 transition-colors"
               />
 
               <button
                 onClick={handleCreateStore}
                 disabled={creating}
-                className="w-full py-2.5 rounded-lg bg-amber-400 text-black font-semibold text-sm hover:bg-amber-300 disabled:opacity-60"
+                className="w-full py-2.5 rounded-lg bg-amber-400 text-black font-semibold text-sm hover:bg-amber-300 disabled:opacity-60 transition-colors shadow-lg shadow-amber-400/20"
               >
                 {creating ? "Creating..." : "Create Store"}
               </button>
@@ -174,13 +194,13 @@ const handleCreateStore = async () => {
                 value={storeKey}
                 onChange={(e) => setStoreKey(e.target.value)}
                 placeholder="Enter store key"
-                className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm outline-none"
+                className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-amber-400/50 transition-colors"
               />
 
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm outline-none"
+                className="w-full px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm outline-none focus:border-amber-400/50 transition-colors [&>option]:bg-[#121524]"
               >
                 <option value="editor">Editor</option>
                 <option value="packer">Packer</option>
@@ -190,7 +210,7 @@ const handleCreateStore = async () => {
               <button
                 onClick={handleJoinStore}
                 disabled={joining}
-                className="w-full py-2.5 rounded-lg bg-white/10 border border-white/10 text-white font-semibold text-sm hover:bg-white/15 disabled:opacity-60"
+                className="w-full py-2.5 rounded-lg bg-white/10 border border-white/10 text-white font-semibold text-sm hover:bg-white/15 disabled:opacity-60 transition-colors"
               >
                 {joining ? "Sending Request..." : "Request Access"}
               </button>

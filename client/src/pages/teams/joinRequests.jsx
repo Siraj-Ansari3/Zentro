@@ -72,8 +72,8 @@ export default function JoinRequests() {
       
       // Adjust endpoints based on your backend routing
       const endpoint = action === "approve" 
-        ? "/stores/join-requests/approve" 
-        : "/stores/join-requests/reject";
+        ? "/requests/join-requests/approve" 
+        : "/requests/join-requests/reject";
 
       await api.post(endpoint, {
         requestId,
