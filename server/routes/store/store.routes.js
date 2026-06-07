@@ -4,6 +4,7 @@ import { verifyAuth } from "../../middlewares/verifyAuth.js";
 import { attachUser } from "../../middlewares/attachUser.js";
 
 import { createStore } from "../../controllers/store/store.controller.js";
+import { joinStore } from "../../controllers/store/joinStore.controller.js";
 
 const router = express.Router();
 
@@ -17,4 +18,10 @@ router.post(
   createStore
 );
 
+router.post(
+  "/join",
+  verifyAuth,
+  attachUser,
+  joinStore
+);
 export default router;
