@@ -29,6 +29,8 @@ export function StoreProvider({ children }) {
           console.log("Auto-selecting approved store:", approved);
           setActiveStore(approved);
         }
+
+        
       } catch (err) {
         console.error(err);
       } finally {

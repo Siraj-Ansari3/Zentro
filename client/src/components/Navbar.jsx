@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { Menu, Search, Bell, SunMedium, Command, LogOut, User, ChevronDown, Zap } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useStore } from "../context/StoreContext";
 
 const routeLabels = {
   "/":                        "Dashboard",
@@ -26,6 +27,7 @@ const HARDCODED_ROLE  = "Admin";
 export default function Navbar({ onMenuClick }) {
   const { pathname } = useLocation();
   const { user, logOut } = useAuth();
+  const { activeStore } = useStore();
   const navigate = useNavigate();
   const pageTitle = routeLabels[pathname] ?? "Dashboard";
 
@@ -126,7 +128,7 @@ export default function Navbar({ onMenuClick }) {
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-slate-100 truncate">
-                      {user?.displayName ?? "Ali Raza"}
+                      {user?.dbUser?.displayName }
                     </p>
                   </div>
                 </div>
@@ -134,7 +136,7 @@ export default function Navbar({ onMenuClick }) {
                 {/* Role badge */}
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-amber-400/10 text-amber-400 border border-amber-400/20">
                   <Zap size={9} />
-                  {HARDCODED_ROLE}
+                  {activeStore?.role}
                 </span>
 
                 {/* Email */}

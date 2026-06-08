@@ -12,14 +12,11 @@ import requestsRoutes from "./routes/requests/requests.routes.js";
 import userProfileRoutes from "./routes/profile/userProfile.routes.js"; 
 import { verifyAuth } from "./middlewares/verifyAuth.js";
 import { attachUser } from "./middlewares/attachUser.js";
-// import { updateProfile } from "./controllers/profile/userProfile.controller.js";
 
 dotenv.config();
 
 const app = express();
 
-
-// middlewares
 app.use(cors({
   origin: process.env.CLIENT_URL || "http://localhost:5173",
   credentials: true,
@@ -29,7 +26,7 @@ app.use(cors({
 
 app.use(express.json());
 
-// connect database
+
 connectDB();
 
 
@@ -40,14 +37,7 @@ app.use("/courier", courierRoutes);
 app.use("/requests", requestsRoutes); 
 app.use("/users/", userProfileRoutes)
 
-// app.post("/stores", (req, res) => {
-//   console.log("Received request to create store with data:", req.body);
-//   res.status(201).json({ message: "Store created successfully" });
-// });
 
-app.get("/", (req, res) => {
-  res.send("API is running...");
-});
 
 app.get(
   "/auth/bootstrap",
@@ -68,20 +58,12 @@ app.get(
         storeName: m.storeId.name,
         role: m.role,
         status: m.status,
+        joinedAt: m.createdAt,
       })),
     });
   }
 );
 
-app.get("/test", async (req, res) => {
-  try {
-    const users = await admin.auth().listUsers(1);
-
-    res.json(users.users);
-  } catch (err) {
-    res.status(500).json(err);
-  }
-});
 
 const PORT = process.env.PORT || 8000;
 
