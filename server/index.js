@@ -9,8 +9,10 @@ import dashboardRoutes from "./routes/dashboard/dashboard.routes.js";
 import orderRoutes from "./routes/order/order.routes.js";
 import courierRoutes from "./routes/courier/courier.routes.js";
 import requestsRoutes from "./routes/requests/requests.routes.js"; 
+import userProfileRoutes from "./routes/profile/userProfile.routes.js"; 
 import { verifyAuth } from "./middlewares/verifyAuth.js";
 import { attachUser } from "./middlewares/attachUser.js";
+// import { updateProfile } from "./controllers/profile/userProfile.controller.js";
 
 dotenv.config();
 
@@ -35,7 +37,8 @@ app.use("/stores", storeRoutes);
 app.use("/dashboard", dashboardRoutes);
 app.use("/order", orderRoutes);
 app.use("/courier", courierRoutes);
-app.use("/requests", requestsRoutes); // Importing the requests routes
+app.use("/requests", requestsRoutes); 
+app.use("/users/", userProfileRoutes)
 
 // app.post("/stores", (req, res) => {
 //   console.log("Received request to create store with data:", req.body);

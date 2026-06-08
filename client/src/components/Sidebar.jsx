@@ -54,6 +54,8 @@ import {
   Zap,
   FileText,
 } from "lucide-react";
+import { useStore } from "../context/StoreContext";
+import { useAuth } from "../context/AuthContext";
 
 const navigation = [
   {
@@ -270,6 +272,9 @@ function NavGroup({ group, isExpanded, onToggle }) {
 
 export default function Sidebar({ isOpen, onClose }) {
   const location = useLocation();
+  const { activeStore } = useStore();
+  const { user } = useAuth();
+
 
   // Auto-open active group on mount
   const getDefaultOpen = () => {
@@ -387,9 +392,9 @@ export default function Sidebar({ isOpen, onClose }) {
             </div>
             <div className="min-w-0">
               <p className="text-xs font-semibold text-slate-200 truncate leading-none mb-0.5">
-                Alex Morgan
+                {user ? user?.dbUser.displayName : "Loading..."}
               </p>
-              <p className="text-[10px] text-slate-500 truncate">admin@zentro.io</p>
+              <p className="text-[10px] text-slate-500 truncate">{activeStore.role}</p>
             </div>
           </div>
         </div>

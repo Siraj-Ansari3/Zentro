@@ -6,6 +6,7 @@ import CourierDashboard from "../pages/courier/CourierDashboard";
 import CourierPerformance from "../pages/courier/CourierPerformance";
 import CourierIntegration from "../pages/integrations/CourierIntegration";
 import JoinRequests from "../pages/teams/joinRequests";
+import ProfilePage from "../pages/profile/ProfilePage";
 
 function Placeholder({ title }) {
   return (
@@ -26,6 +27,7 @@ export default function AppRouter() {
     <Routes>
       {/* Dashboard */}
       <Route path="/"                     element={<Dashboard />} />
+
 
       {/* Orders */}
       <Route path="/orders/all"           element={<AllOrders />} />
@@ -78,11 +80,11 @@ export default function AppRouter() {
       <Route path="/analytics/revenue"     element={<Placeholder title="Revenue Insights" />} />
 
       {/* Teams */}
-      <Route path="/teams/members"  element={<Placeholder title="Team Members" />} />
-      <Route path="/teams/roles"    element={<Placeholder title="Roles & Permissions" />} />
-      <Route path="/teams/join-requests" element={<JoinRequests />} />
-      <Route path="/teams/audit"    element={<Placeholder title="Audit Logs" />} />
-      <Route path="/teams/activity" element={<Placeholder title="Activity Logs" />} />
+      <Route path="/teams/members"         element={<Placeholder title="Team Members" />} />
+      <Route path="/teams/roles"           element={<Placeholder title="Roles & Permissions" />} />
+      <Route path="/teams/join-requests"   element={<JoinRequests />} />
+      <Route path="/teams/audit"           element={<Placeholder title="Audit Logs" />} />
+      <Route path="/teams/activity"        element={<Placeholder title="Activity Logs" />} />
 
       {/* Integrations */}
       <Route path="/integrations/courier"  element={<CourierIntegration />} />
@@ -95,7 +97,8 @@ export default function AppRouter() {
       <Route path="/settings/org"           element={<Placeholder title="Organization Settings" />} />
       <Route path="/settings/notifications" element={<Placeholder title="Notification Settings" />} />
       <Route path="/settings/billing"       element={<Placeholder title="Billing" />} />
-      <Route path="/settings/profile"       element={<Placeholder title="Profile Settings" />} />
+      <Route path="/settings/profile"       element={<ProfilePage />} />
+
 
       {/* Fallback */}
       <Route path="*" element={<Placeholder title="404 — Not Found" />} />
