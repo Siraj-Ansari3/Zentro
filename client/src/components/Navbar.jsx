@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
-import { Menu, Search, Bell, SunMedium, Command, LogOut, User, ChevronDown, Zap } from "lucide-react";
+import { 
+  Menu, Search, Bell, SunMedium, Command, LogOut, 
+  User, ChevronDown, Zap, Store, Check 
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useStore } from "../context/StoreContext";
 
@@ -22,17 +25,22 @@ const routeLabels = {
 
 // Hardcoded user details — swap with real data source when ready
 const HARDCODED_EMAIL = "ali.raza@company.com";
-const HARDCODED_ROLE  = "Admin";
 
 export default function Navbar({ onMenuClick }) {
   const { pathname } = useLocation();
   const { user, logOut } = useAuth();
-  const { activeStore } = useStore();
+  
+  // Extract the new variables from StoreContext
+  const { activeStore, availableStores, switchStore } = useStore();
+  
   const navigate = useNavigate();
   const pageTitle = routeLabels[pathname] ?? "Dashboard";
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [storeDropdownOpen, setStoreDropdownOpen] = useState(false); // New state for store selector
+  
   const dropdownRef = useRef(null);
+  const storeDropdownRef = useRef(null); // New ref for store selector
 
   const initial = user?.email?.[0]?.toUpperCase() ?? "A";
 
@@ -42,11 +50,14 @@ export default function Navbar({ onMenuClick }) {
     navigate("/login");
   }
 
-  // Close on outside click
+  // Close dropdowns on outside click
   useEffect(() => {
     function handleClickOutside(e) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setDropdownOpen(false);
+      }
+      if (storeDropdownRef.current && !storeDropdownRef.current.contains(e.target)) {
+        setStoreDropdownOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -63,13 +74,88 @@ export default function Navbar({ onMenuClick }) {
         <Menu size={18} />
       </button>
 
-      {/* Page title */}
-      <h1
-        className="text-white font-semibold text-base hidden sm:block flex-shrink-0"
-        style={{ fontFamily: "'Syne', sans-serif" }}
-      >
-        {pageTitle}
-      </h1>
+      {/* Page Title & Store Selector Group */}
+      <div className="hidden sm:flex items-center gap-4 flex-shrink-0">
+        <h1
+          className="text-white font-semibold text-base"
+          style={{ fontFamily: "'Syne', sans-serif" }}
+        >
+          {pageTitle}
+        </h1>
+
+        {/* Divider */}
+        <div className="h-4 w-px bg-white/[0.15]" />
+
+        {/* SHOPIFY-STYLE STORE SELECTOR */}
+        <div className="relative" ref={storeDropdownRef}>
+          <button
+            onClick={() => setStoreDropdownOpen((prev) => !prev)}
+            className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-white/[0.04] transition-colors group"
+          >
+            <div className="w-5 h-5 rounded flex items-center justify-center bg-amber-400/10 border border-amber-400/20 text-amber-400">
+              <Store size={11} />
+            </div>
+            <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors truncate max-w-[140px]">
+              {activeStore?.storeName || "Select Store"}
+            </span>
+            <ChevronDown 
+              size={12} 
+              className={`text-slate-500 transition-transform duration-200 ${storeDropdownOpen ? "rotate-180" : ""}`} 
+            />
+          </button>
+
+          {/* Store Selector Dropdown */}
+          {storeDropdownOpen && (
+            <div className="absolute left-0 top-[calc(100%+10px)] w-56 rounded-2xl border border-white/[0.08] bg-[#13162a] shadow-[0_20px_60px_rgba(0,0,0,0.6)] p-1.5 z-50 animate-in fade-in zoom-in-95 origin-top-left duration-150">
+              <div className="px-2.5 py-2 mb-0.5">
+                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                  Your Stores
+                </p>
+              </div>
+              
+              <div className="space-y-0.5 max-h-[50vh] overflow-y-auto custom-scrollbar">
+                {availableStores?.map((store) => {
+                  const isActive = store.storeId === activeStore?.storeId;
+                  return (
+                    <button
+                      key={store.storeId}
+                      onClick={() => {
+                        switchStore(store.storeId);
+                        setStoreDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-sm transition-colors ${
+                        isActive 
+                          ? "bg-amber-400/10 text-amber-400 font-medium" 
+                          : "text-slate-300 hover:bg-white/[0.05] hover:text-white"
+                      }`}
+                    >
+                      <span className="truncate pr-3">{store.storeName}</span>
+                      {isActive && <Check size={14} className="flex-shrink-0" />}
+                    </button>
+                  );
+                })}
+                
+                {availableStores?.length === 0 && (
+                  <div className="px-2.5 py-3 text-xs text-slate-500 text-center">
+                    No approved stores found.
+                  </div>
+                )}
+              </div>
+
+              <div className="my-1 h-px bg-white/[0.06]" />
+              
+              {/* Quick action to go to onboarding */}
+              <Link
+                to="/store-onboarding"
+                onClick={() => setStoreDropdownOpen(false)}
+                className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-100 hover:bg-white/[0.05] transition-colors"
+              >
+                Create or join another store
+              </Link>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Search */}
       <div className="flex-1 max-w-sm mx-auto sm:mx-0 sm:ml-6">
@@ -128,7 +214,7 @@ export default function Navbar({ onMenuClick }) {
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-slate-100 truncate">
-                      {user?.dbUser?.displayName }
+                      {user?.dbUser?.displayName || user?.displayName || "Store User"}
                     </p>
                   </div>
                 </div>
@@ -136,7 +222,7 @@ export default function Navbar({ onMenuClick }) {
                 {/* Role badge */}
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-amber-400/10 text-amber-400 border border-amber-400/20">
                   <Zap size={9} />
-                  {activeStore?.role}
+                  {activeStore?.role || "Member"}
                 </span>
 
                 {/* Email */}

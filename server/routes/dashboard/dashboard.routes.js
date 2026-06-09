@@ -9,10 +9,6 @@ const router = express.Router();
 
 router.get(
   "/stats",
-  (req, res, next) => {
-    console.log("Received request for dashboard stats with query:", req.query);
-    next();
-  },
   verifyAuth,
   attachUser,
   getDashboardStats

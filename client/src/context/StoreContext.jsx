@@ -10,19 +10,35 @@ export function StoreProvider({ children }) {
   const [activeStore, setActiveStore] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // ─────────────────────────────────────────────────────────────
+  // NEW: Filter only approved stores (created or joined)
+  // ─────────────────────────────────────────────────────────────
+  const availableStores = memberships.filter((m) => m.status === "approved");
+  
+  console.log("available stores:", availableStores)
+  // ─────────────────────────────────────────────────────────────
+  // NEW: Selector function to switch active store safely
+  // ─────────────────────────────────────────────────────────────
+  const switchStore = (storeId) => {
+    const storeToSelect = availableStores.find((m) => m.storeId === storeId);
+    if (storeToSelect) {
+      setActiveStore(storeToSelect);
+    } else {
+      console.warn(`Store with ID ${storeId} not found or not approved.`);
+    }
+  };
+
   useEffect(() => {
     if (!user) return;
 
     const fetchStores = async () => {
       try {
         const res = await api.get("/auth/bootstrap");
-        console.log(res.data);
-
         setMemberships(res.data.memberships || []);
 
         // auto-select first approved store
         const approved = res.data.memberships.find(
-          m => m.status === "approved"
+          (m) => m.status === "approved"
         );
 
         if (approved) {
@@ -30,7 +46,6 @@ export function StoreProvider({ children }) {
           setActiveStore(approved);
         }
 
-        
       } catch (err) {
         console.error(err);
       } finally {
@@ -44,8 +59,10 @@ export function StoreProvider({ children }) {
   return (
     <StoreContext.Provider value={{
       memberships,
+      availableStores, // Export the filtered list
       activeStore,
       setActiveStore,
+      switchStore,     // Export the selector function
       loading
     }}>
       {children}

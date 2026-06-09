@@ -44,13 +44,13 @@ app.get(
   verifyAuth,
   attachUser,
   async (req, res) => {
-    console.log("Bootstrapping for user:", req.user.email);
     const Membership = (await import("./models/Membership.js")).default;
 
     const memberships = await Membership.find({
       userId: req.user.id,
     }).populate("storeId");
 
+    
     res.json({
       user: req.user,
       memberships: memberships.map((m) => ({
