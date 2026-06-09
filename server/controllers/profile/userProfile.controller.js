@@ -3,7 +3,7 @@ import User from "../../models/User.js";
 export const updateProfile = async (req, res) => {
   try {
     const { displayName } = req.body;
-    const userId = req.user.id; // Assumes your auth middleware attaches the Mongo _id here
+    const userId = req.user.id; 
 
     // ─────────────────────────────────
     // 1. INPUT VALIDATION

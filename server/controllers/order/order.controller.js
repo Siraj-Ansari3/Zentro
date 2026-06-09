@@ -25,7 +25,7 @@ export const createOrder = async (req, res) => {
     } = req.body;
 
 
-    console.log(customer.name);
+
     // ─────────────────────────────
     // VALIDATION
     // ─────────────────────────────
@@ -50,8 +50,8 @@ export const createOrder = async (req, res) => {
       name: item.name,
       sku: item.sku || "",
       quantity: item.quantity,
-      unitPrice: item.price,                        // schema field is unitPrice
-      totalPrice: item.price * item.quantity,       // schema field is totalPrice
+      unitPrice: item.price,                        
+      totalPrice: item.price * item.quantity,       
     }));
 
     // ─────────────────────────────
@@ -69,16 +69,12 @@ export const createOrder = async (req, res) => {
     const orderNumber =
       "ORD-" + Date.now() + "-" + Math.floor(Math.random() * 1000);
 
-
-
-
-
-
-
     let customerId = null; // Initialize customerId to null
     const existingCustomer = await Customer.findOne({ phone: customer.phone, storeId });
     customerId = existingCustomer ? existingCustomer._id : null;
 
+
+    //if customer doesn't exist, create a new one
     if (!existingCustomer) {
       const newCustomer = await Customer.create({
         storeId,
@@ -155,9 +151,7 @@ export const createOrder = async (req, res) => {
 
 export const getAllOrders = async (req, res) => {
   try {
-    console.log("Get All Orders - Query Params:", req.query);
     const { storeId } = req.query;
-    console.log("Fetching orders for storeId:", storeId);
 
     if (!storeId) {
       return res.status(400).json({

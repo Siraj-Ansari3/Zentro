@@ -9,7 +9,8 @@ import dashboardRoutes from "./routes/dashboard/dashboard.routes.js";
 import orderRoutes from "./routes/order/order.routes.js";
 import courierRoutes from "./routes/courier/courier.routes.js";
 import requestsRoutes from "./routes/requests/requests.routes.js"; 
-import userProfileRoutes from "./routes/profile/userProfile.routes.js"; 
+import userProfileRoutes from "./routes/profile/userProfile.routes.js";
+import customerRoutes from "./routes/customer/customer.routes.js"; 
 import { verifyAuth } from "./middlewares/verifyAuth.js";
 import { attachUser } from "./middlewares/attachUser.js";
 
@@ -35,7 +36,8 @@ app.use("/dashboard", dashboardRoutes);
 app.use("/order", orderRoutes);
 app.use("/courier", courierRoutes);
 app.use("/requests", requestsRoutes); 
-app.use("/users/", userProfileRoutes)
+app.use("/users/", userProfileRoutes);
+app.use("/customers", customerRoutes);
 
 
 
