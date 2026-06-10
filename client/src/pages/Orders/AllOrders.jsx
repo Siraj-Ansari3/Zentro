@@ -429,12 +429,121 @@ const TIMELINE = [
   { event: "Delivered", time: "Pending", done: false },
 ];
 
-function OrderDrawer({ order, onClose }) {
+function OrderDrawer({ order, onClose, onUpdateStatus, onAssignCourier }) {
+  const [loading, setLoading] = useState(false);
+
   if (!order) return null;
+
+  // ─────────────────────────────────────────────────────────────
+  // DYNAMIC ACTION RENDERER
+  // ─────────────────────────────────────────────────────────────
+  const renderActions = () => {
+    switch (order.orderStatus) {
+      case "Pending Verification":
+        return (
+          <>
+            <button
+              onClick={async () => {
+                setLoading(true);
+                await onUpdateStatus(order.id, "packed"); // Moves to Packed phase
+                setLoading(false);
+              }}
+              disabled={loading}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-400 text-black text-xs font-bold hover:bg-emerald-300 disabled:opacity-50 transition-colors shadow-lg shadow-emerald-400/20"
+            >
+              {loading ? <Loader2 size={13} className="animate-spin" /> : <UserCheck size={13} />}
+              mark as verified
+            </button>
+            <button
+              onClick={async () => {
+                if (confirm("Are you sure you want to cancel this order?")) {
+                  setLoading(true);
+                  await onUpdateStatus(order.id, "failed_delivery");
+                  setLoading(false);
+                }
+              }}
+              disabled={loading}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-red-400 text-xs font-semibold hover:bg-red-400/10 hover:border-red-500/20 transition-colors"
+            >
+              Cancel Order
+            </button>
+          </>
+        );
+
+      case "Packed":
+        return (
+          <>
+            <button
+              onClick={() => {
+                onClose(); // Close drawer to focus on the courier modal
+                onAssignCourier(order);
+              }}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-amber-400 text-black text-xs font-bold hover:bg-amber-300 transition-colors shadow-lg shadow-amber-400/20"
+            >
+              <Truck size={13} />
+              assign courier
+            </button>
+            <button
+              onClick={async () => {
+                setLoading(true);
+                await onUpdateStatus(order.id, "pending_verification");
+                setLoading(false);
+              }}
+              disabled={loading}
+              className="px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-slate-400 text-xs font-medium hover:bg-white/[0.08] transition-colors"
+              title="Move back to Pending"
+            >
+              <RefreshCcw size={13} />
+            </button>
+          </>
+        );
+
+      case "assigned":
+        return (
+          <>
+            <a
+              href={`https://tracking.postex.pk/tracking/${order.trackingId}`} // Fallback template link
+              target="_blank"
+              rel="noreferrer"
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-500 text-white text-xs font-bold hover:bg-blue-600 transition-colors"
+            >
+              <Printer size={13} />
+              Track Portal
+            </a>
+            <button
+              onClick={async () => {
+                setLoading(true);
+                await onUpdateStatus(order.id, "delivered");
+                setLoading(false);
+              }}
+              disabled={loading}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-emerald-400 text-xs font-semibold hover:bg-emerald-400/10 transition-colors"
+            >
+              Force Mark Delivered
+            </button>
+          </>
+        );
+
+      case "Delivered":
+        return (
+          <div className="w-full text-center p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium flex items-center justify-center gap-2">
+            <CheckCircle2 size={14} /> This order has been successfully delivered.
+          </div>
+        );
+
+      default:
+        return (
+          <div className="w-full text-center p-2 rounded-xl bg-white/[0.02] border border-white/[0.06] text-slate-500 text-xs italic">
+            No pipeline actions available for status: {order.orderStatus}
+          </div>
+        );
+    }
+  };
+
   return (
     <>
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" onClick={onClose} />
-      <div className="fixed top-0 right-0 h-full w-full max-w-md bg-[#0f1120] border-l border-white/[0.07] z-50 flex flex-col overflow-hidden shadow-2xl">
+      <div className="fixed top-0 right-0 h-full w-full max-w-md bg-[#0f1120] border-l border-l-white/[0.07] z-50 flex flex-col overflow-hidden shadow-2xl">
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] flex-shrink-0">
           <div>
             <div className="flex items-center gap-2 mb-0.5">
@@ -447,6 +556,8 @@ function OrderDrawer({ order, onClose }) {
             <X size={16} />
           </button>
         </div>
+
+        {/* Main Body */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
           <section>
             <h3 className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-3">Customer Details</h3>
@@ -464,6 +575,7 @@ function OrderDrawer({ order, onClose }) {
               </div>
             </div>
           </section>
+
           <section>
             <h3 className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-3">Courier Details</h3>
             <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 space-y-2">
@@ -473,6 +585,7 @@ function OrderDrawer({ order, onClose }) {
               <div className="flex items-center justify-between text-xs"><span className="text-slate-500">Assigned Staff</span><span className="text-slate-300">{order.staff || "—"}</span></div>
             </div>
           </section>
+
           <section>
             <h3 className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-3">Order Timeline</h3>
             <div className="relative pl-5">
@@ -486,9 +599,10 @@ function OrderDrawer({ order, onClose }) {
             </div>
           </section>
         </div>
-        <div className="px-5 py-4 border-t border-white/[0.06] flex items-center gap-2 flex-shrink-0">
-          <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-amber-400 text-black text-xs font-bold hover:bg-amber-300 transition-colors"><UserCheck size={13} /> Verify Customer</button>
-          <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/[0.05] border border-white/[0.08] text-slate-300 text-xs font-semibold hover:bg-white/[0.08] transition-colors"><Truck size={13} /> Assign Courier</button>
+
+        {/* Dynamic Action Sticky Footer */}
+        <div className="px-5 py-4 border-t border-white/[0.06] flex items-center gap-2 flex-shrink-0 bg-[#0d0f1a]">
+          {renderActions()}
         </div>
       </div>
     </>
@@ -540,6 +654,8 @@ function ActionDropdown({ order, onView, onAssignCourier }) {
 // TABLE ROW
 // ─────────────────────────────────────────────────────────────
 function TableRow({ order, selected, onSelect, onView, onAssignCourier }) {
+
+  console.log(order)
   return (
     <tr onClick={() => onView(order)} className={`border-t border-white/[0.04] cursor-pointer transition-colors group ${selected ? "bg-amber-400/[0.05]" : "hover:bg-white/[0.025]"} ${order.risk === "high" ? "border-l-2 border-l-red-400/40" : ""}`}>
       <td className="pl-4 pr-2 py-3" onClick={e => e.stopPropagation()}>
@@ -848,7 +964,7 @@ export default function AllOrders() {
 
         risk: order.customerId?.riskLevel || "unknown",
 
-        courier: order.courierId?.name || null,
+        courier: order?.courier || null,
 
         shipStatus: (() => {
           switch (order.status) {
@@ -918,6 +1034,32 @@ export default function AllOrders() {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+
+
+  // Place this inside your AllOrders component, right below fetchOrders
+  const handleUpdateOrderStatus = async (orderNumber, newStatus) => {
+    try {
+      await api.put(`/order/update_status`, {
+        storeId: activeStore?.storeId, // storeId passed cleanly in the body
+        orderNumber,
+        status: newStatus,
+      });
+
+      // Refresh data so the status change populates across tabs
+      await fetchOrders();
+
+      // Smooth UI synchronization: if the active record is open in the drawer, keep it in sync
+      setDrawerOrder(prev => prev && prev.id === orderNumber ? {
+        ...prev,
+        orderStatus: newStatus === "packed" ? "Packed" : newStatus === "pending_verification" ? "Pending Verification" : "Delivered"
+      } : prev);
+
+    } catch (err) {
+      console.error("Failed to alter order pipeline state:", err);
+      alert(err?.response?.data?.message || "Failed to update order status");
     }
   };
 
@@ -1032,151 +1174,145 @@ export default function AllOrders() {
       )}
 
       {/* Table */}
-      {/* <div className="bg-[#13151f] border border-white/[0.06] rounded-2xl overflow-hidden">
+      <div className="bg-[#13151f] border border-white/[0.06] rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px]">
             <thead>
               <tr className="border-b border-white/[0.06]">
                 <th className="pl-4 pr-2 py-3">
-                  <input type="checkbox"
+                  <input
+                    type="checkbox"
                     checked={paginated.length > 0 && paginated.every(o => selected.has(o.id))}
-                    onChange={e => setSelected(e.target.checked ? new Set(paginated.map(o => o.id)) : new Set())}
+                    onChange={e =>
+                      setSelected(
+                        e.target.checked
+                          ? new Set(paginated.map(o => o.id))
+                          : new Set()
+                      )
+                    }
                     className="w-3.5 h-3.5 rounded border-white/20 bg-white/5 accent-amber-400 cursor-pointer"
                   />
                 </th>
                 {COLUMNS.map(({ key, label, sortable }) => (
-                  <th key={key} onClick={() => sortable && setSort(s => ({ key, dir: s.key === key && s.dir === "asc" ? "desc" : "asc" }))}
-                    className={`px-3 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap ${sortable ? "cursor-pointer hover:text-slate-300 select-none" : ""}`}
+                  <th
+                    key={key}
+                    onClick={() =>
+                      sortable &&
+                      setSort(s => ({
+                        key,
+                        dir: s.key === key && s.dir === "asc" ? "desc" : "asc",
+                      }))
+                    }
+                    className={`px-3 py-3 text-left text-[10px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap ${sortable ? "cursor-pointer hover:text-slate-300 select-none" : ""
+                      }`}
                   >
-                    <span className="flex items-center gap-1">{label}{sortable && <ArrowUpDown size={10} className={sort.key === key ? "text-amber-400" : "text-slate-700"} />}</span>
+                    <span className="flex items-center gap-1">
+                      {label}
+                      {sortable && (
+                        <ArrowUpDown
+                          size={10}
+                          className={sort.key === key ? "text-amber-400" : "text-slate-700"}
+                        />
+                      )}
+                    </span>
                   </th>
                 ))}
               </tr>
             </thead>
+
             <tbody>
-              {paginated.length === 0 ? (
-                <tr><td colSpan={12}>
-                  <div className="flex flex-col items-center justify-center py-20 text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mb-4"><Inbox size={28} className="text-slate-600" /></div>
-                    <h3 className="text-base font-bold text-white mb-1" style={{ fontFamily: "'Syne',sans-serif" }}>No orders found</h3>
-                    <p className="text-sm text-slate-600 mb-5">Try adjusting your search or filters.</p>
-                    <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-400 text-black text-sm font-semibold hover:bg-amber-300 transition-colors"><Plus size={14} /> Add Order</button>
-                  </div>
-                </td></tr>
-              ) : paginated.map(order => (
-                <TableRow
-                  key={order.id} order={order}
-                  selected={selected.has(order.id)}
-                  onSelect={(id, checked) => setSelected(s => { const n = new Set(s); checked ? n.add(id) : n.delete(id); return n })}
-                  onView={setDrawerOrder}
-                />
-              ))}
+              {loading ? (
+                <tr>
+                  <td colSpan={12}>
+                    <div className="flex flex-col items-center justify-center py-20">
+                      <Loader2 size={30} className="animate-spin text-amber-400 mb-3" />
+                      <p className="text-sm text-slate-400">Loading orders...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td colSpan={12}>
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                      <AlertTriangle size={30} className="text-red-400 mb-3" />
+                      <h3 className="text-base font-bold text-white mb-1">
+                        Failed to load orders
+                      </h3>
+                      <p className="text-sm text-slate-500 mb-4">{error}</p>
+                      <button
+                        onClick={fetchOrders}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-400 text-black text-sm font-semibold hover:bg-amber-300 transition-colors"
+                      >
+                        <RefreshCcw size={14} />
+                        Retry
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ) : paginated.length === 0 ? (
+                <tr>
+                  <td colSpan={12}>
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                      <div className="w-16 h-16 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mb-4">
+                        <Inbox size={28} className="text-slate-600" />
+                      </div>
+                      <h3
+                        className="text-base font-bold text-white mb-1"
+                        style={{ fontFamily: "'Syne',sans-serif" }}
+                      >
+                        No orders found
+                      </h3>
+                      <p className="text-sm text-slate-600 mb-5">
+                        Try adjusting your search or filters.
+                      </p>
+                      <button
+                        onClick={() => setShowCreate(true)}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-400 text-black text-sm font-semibold hover:bg-amber-300 transition-colors"
+                      >
+                        <Plus size={14} />
+                        Add Order
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                paginated.map(order => (
+                  <TableRow
+                    key={order.id}
+                    order={order}
+                    selected={selected.has(order.id)}
+                    onSelect={(id, checked) => {
+                      const n = new Set(selected);
+                      checked ? n.add(id) : n.delete(id);
+                      setSelected(n);
+                    }}
+                    onView={setDrawerOrder}
+                    onAssignCourier={assignCourier}
+                  />
+                ))
+              )}
             </tbody>
           </table>
         </div>
-        <Pagination page={page} total={filtered.length} perPage={perPage} onPage={setPage} onPerPage={setPerPage} />
-      </div> */}
 
-
-
-      <tbody>
-        {loading ? (
-          <tr>
-            <td colSpan={12}>
-              <div className="flex flex-col items-center justify-center py-20">
-                <Loader2
-                  size={30}
-                  className="animate-spin text-amber-400 mb-3"
-                />
-
-                <p className="text-sm text-slate-400">
-                  Loading orders...
-                </p>
-              </div>
-            </td>
-          </tr>
-        ) : error ? (
-          <tr>
-            <td colSpan={12}>
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <AlertTriangle
-                  size={30}
-                  className="text-red-400 mb-3"
-                />
-
-                <h3 className="text-base font-bold text-white mb-1">
-                  Failed to load orders
-                </h3>
-
-                <p className="text-sm text-slate-500 mb-4">
-                  {error}
-                </p>
-
-                <button
-                  onClick={fetchOrders}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-400 text-black text-sm font-semibold hover:bg-amber-300 transition-colors"
-                >
-                  <RefreshCcw size={14} />
-                  Retry
-                </button>
-              </div>
-            </td>
-          </tr>
-        ) : paginated.length === 0 ? (
-          <tr>
-            <td colSpan={12}>
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mb-4">
-                  <Inbox size={28} className="text-slate-600" />
-                </div>
-
-                <h3
-                  className="text-base font-bold text-white mb-1"
-                  style={{ fontFamily: "'Syne',sans-serif" }}
-                >
-                  No orders found
-                </h3>
-
-                <p className="text-sm text-slate-600 mb-5">
-                  Try adjusting your search or filters.
-                </p>
-
-                <button
-                  onClick={() => setShowCreate(true)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-400 text-black text-sm font-semibold hover:bg-amber-300 transition-colors"
-                >
-                  <Plus size={14} />
-                  Add Order
-                </button>
-              </div>
-            </td>
-          </tr>
-        ) : (
-          paginated.map((order) => (
-            <TableRow
-              key={order.id}
-              order={order}
-              selected={selected.has(order.id)}
-              onSelect={(id, checked) => {
-                const n = new Set(selected);
-
-                checked ? n.add(id) : n.delete(id);
-
-                setSelected(n);
-              }}
-              onView={setDrawerOrder}
-              onAssignCourier={assignCourier}
-            />
-          ))
-        )}
-      </tbody>
-
-
-
+        <Pagination
+          page={page}
+          total={filtered.length}
+          perPage={perPage}
+          onPage={setPage}
+          onPerPage={setPerPage}
+        />
+      </div>
 
 
       {/* Modals */}
-      <OrderDrawer order={drawerOrder} onClose={() => setDrawerOrder(null)} />
+      <OrderDrawer
+        order={drawerOrder}
+        onClose={() => setDrawerOrder(null)}
+        onUpdateStatus={handleUpdateOrderStatus}
+        onAssignCourier={assignCourier}
+      />
+
       {showCreate && (
         <CreateOrderModal
           onClose={() => setShowCreate(false)}
@@ -1184,9 +1320,7 @@ export default function AllOrders() {
             fetchOrders();
             setShowCreate(false);
           }}
-
-
-        />
+          />
       )}
 
       {assignCourierOrder && (

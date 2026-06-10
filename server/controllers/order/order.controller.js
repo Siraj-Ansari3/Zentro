@@ -6,10 +6,8 @@ import StoreCourierIntegration from "../../models/StoreCourierIntegration.js";
 
 export const createOrder = async (req, res) => {
   try {
-    // ✅ Fix 1: req.user.id, not req.user._id
     const userId = req.user.id;
 
-    // ✅ Fix 2: storeId from middleware, not re-read from body
     const storeId = req.storeId;
 
     const {
@@ -146,9 +144,6 @@ export const createOrder = async (req, res) => {
 };
 
 
-
-
-
 export const getAllOrders = async (req, res) => {
   try {
     const { storeId } = req.query;
@@ -186,6 +181,106 @@ export const getAllOrders = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch orders",
+      error: error.message,
+    });
+  }
+};
+
+
+
+
+
+export const updateOrderStatus = async (req, res) => {
+  try {
+    const { orderNumber, status } = req.body;
+    const storeId = req.storeId; 
+    const userId = req.user.id;   
+
+    console.log(orderNumber, status, storeId, userId);
+
+    // 1. Basic Validation
+    if (!orderNumber || !status) {
+      return res.status(400).json({
+        success: false,
+        message: "orderNumber and status are required fields.",
+      });
+    }
+
+    // Explicit validation matching your structural schema Enums
+    const validStatuses = [
+      "pending_verification", "confirmed", "packed", "ready_to_ship",
+      "assigned", "booked", "shipped", "in_transit", "delivered",
+      "failed_delivery", "returned", "cancelled"
+    ];
+
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid status code tracking indicator: '${status}'`,
+      });
+    }
+
+    // 2. Locate the Order
+    const order = await Order.findOne({ orderNumber, storeId });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found within this store's scope.",
+      });
+    }
+
+    // 3. Build Dynamic Fields Modifications Base Objects
+    const updateFields = { status };
+    let timelineMessage = `Order status updated to ${status.replace("_", " ")}`;
+
+    // Handle pipeline structural changes dependencies dynamically
+    if (status === "packed") {
+      updateFields.verificationStatus = "verified";
+      updateFields.packingStatus = "packed";
+      timelineMessage = "Order verified and packed successfully.";
+    } 
+    
+    if (status === "delivered") {
+      updateFields.deliveredAt = new Date();
+      updateFields.paymentStatus = "paid"; // Assuming completion means settlement for cash allocations
+      timelineMessage = "Order marked as delivered.";
+    }
+
+    if (status === "pending_verification") {
+      updateFields.verificationStatus = "pending";
+      updateFields.packingStatus = "pending";
+      timelineMessage = "Order returned back to pending verification queue.";
+    }
+
+    // 4. Update Document and Append to Operations Timeline Array
+    const updatedOrder = await Order.findOneAndUpdate(
+      { orderNumber, storeId },
+      {
+        $set: updateFields,
+        $push: {
+          timeline: {
+            type: "status_change",
+            message: timelineMessage,
+            createdBy: userId,
+            createdAt: new Date(),
+          },
+        },
+      },
+      { new: true, runValidators: true }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Order pipeline state adjusted successfully",
+      order: updatedOrder,
+    });
+
+  } catch (error) {
+    console.error("Order Status Update System Error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error adjusting order status parameters.",
       error: error.message,
     });
   }
