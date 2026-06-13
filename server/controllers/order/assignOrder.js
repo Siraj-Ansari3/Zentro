@@ -127,7 +127,7 @@ export const assignOrder = async (req, res) => {
         // 7. Handle PostEx Success
         if (response.data.statusCode === "200") {
             const trackingNumber = response.data.dist.trackingNumber;
-            const trackingUrl = `https://tracking.postex.pk/tracking/${trackingNumber}`;
+            const trackingUrl = `https://postex.pk/tracking?cn=${trackingNumber}`;
             
             // Update order with tracking info
             await Order.findOneAndUpdate(

@@ -441,7 +441,6 @@ function OrderDrawer({ order, onClose, onUpdateStatus, onAssignCourier }) {
   // ─────────────────────────────────────────────────────────────
   const renderActions = () => {
 
-
     switch (order.orderStatus) {
       case "New":
         return (
@@ -487,7 +486,7 @@ function OrderDrawer({ order, onClose, onUpdateStatus, onAssignCourier }) {
               <Truck size={13} />
               assign courier
             </button>
-            <button
+            {/* <button
               onClick={async () => {
                 setLoading(true);
                 await onUpdateStatus(order.id, "pending_verification");
@@ -498,15 +497,15 @@ function OrderDrawer({ order, onClose, onUpdateStatus, onAssignCourier }) {
               title="Move back to Pending"
             >
               <RefreshCcw size={13} />
-            </button>
+            </button> */}
           </>
         );
 
-      case "Assigned":
+      case "Assigned to Courier":
         return (
           <>
             <a
-              href={`https://tracking.postex.pk/tracking/${order.trackingId}`} // Fallback template link
+              href={order.raw.trackingUrl} // Fallback template link
               target="_blank"
               rel="noreferrer"
               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-500 text-white text-xs font-bold hover:bg-blue-600 transition-colors"
@@ -659,7 +658,6 @@ function ActionDropdown({ order, onView, onAssignCourier }) {
 // ─────────────────────────────────────────────────────────────
 function TableRow({ order, selected, onSelect, onView, onAssignCourier }) {
 
-  console.log(order)
   return (
     <tr onClick={() => onView(order)} className={`border-t border-white/[0.04] cursor-pointer transition-colors group ${selected ? "bg-amber-400/[0.05]" : "hover:bg-white/[0.025]"} ${order.risk === "high" ? "border-l-2 border-l-red-400/40" : ""}`}>
       <td className="pl-4 pr-2 py-3" onClick={e => e.stopPropagation()}>
@@ -687,7 +685,7 @@ function TableRow({ order, selected, onSelect, onView, onAssignCourier }) {
       <td className="px-3 py-3"><PayBadge type={order.payment} /></td>
       <td className="px-3 py-3"><RiskBadge level={order.risk} /></td>
       <td className="px-3 py-3">{order.courier ? <span className="text-xs text-slate-300 font-medium">{order.courier}</span> : <span className="text-xs text-slate-600 italic">Unassigned</span>}</td>
-      <td className="px-3 py-3"><ShipBadge status={order.shipStatus} /></td>
+      {/* <td className="px-3 py-3"><ShipBadge status={order.shipStatus} /></td> */}
       <td className="px-3 py-3"><StatusBadge status={order.orderStatus} /></td>
       <td className="px-3 py-3" onClick={e => e.stopPropagation()}><ActionDropdown
         order={order}
@@ -742,7 +740,7 @@ const COLUMNS = [
   { key: "payment", label: "Payment", sortable: false },
   { key: "risk", label: "Risk", sortable: true },
   { key: "courier", label: "Courier", sortable: false },
-  { key: "shipStatus", label: "Shipment", sortable: false },
+  // { key: "shipStatus", label: "Shipment", sortable: false },
   { key: "orderStatus", label: "Status", sortable: false },
   { key: "actions", label: "", sortable: false },
 ];
@@ -1017,7 +1015,7 @@ export default function AllOrders() {
               return "Packed";
 
             case "assigned":
-              return "Assigned";
+              return "Assigned to Courier";
 
             case "shipped":
             case "in_transit":
