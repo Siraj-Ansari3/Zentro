@@ -92,20 +92,17 @@ const orderSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: [
-        "pending_verification",
-        "confirmed",
-        "packed",
-        "ready_to_ship",
+        "new",
+        "verified",
         "assigned",
-        "booked",
         "shipped",
         "in_transit",
         "delivered",
         "failed_delivery",
         "returned",
-        "cancelled",
+        "cancelled"
       ],
-      default: "pending_verification",
+      default: "new",
       index: true,
     },
 
@@ -219,7 +216,12 @@ const orderSchema = new mongoose.Schema(
 
     verificationStatus: {
       type: String,
-      enum: ["pending", "verified", "rejected"],
+      enum: [
+        "not_required",
+        "pending",
+        "verified",
+        "rejected"
+      ],
       default: "pending",
     },
 

@@ -434,18 +434,22 @@ function OrderDrawer({ order, onClose, onUpdateStatus, onAssignCourier }) {
 
   if (!order) return null;
 
+  console.log("Rendering OrderDrawer for order:", order);
+
   // ─────────────────────────────────────────────────────────────
   // DYNAMIC ACTION RENDERER
   // ─────────────────────────────────────────────────────────────
   const renderActions = () => {
+
+
     switch (order.orderStatus) {
-      case "Pending Verification":
+      case "New":
         return (
           <>
             <button
               onClick={async () => {
                 setLoading(true);
-                await onUpdateStatus(order.id, "packed"); // Moves to Packed phase
+                await onUpdateStatus(order.id, "verified"); // Moves to Verified phase
                 setLoading(false);
               }}
               disabled={loading}
@@ -470,7 +474,7 @@ function OrderDrawer({ order, onClose, onUpdateStatus, onAssignCourier }) {
           </>
         );
 
-      case "Packed":
+      case "Verified":
         return (
           <>
             <button
@@ -498,7 +502,7 @@ function OrderDrawer({ order, onClose, onUpdateStatus, onAssignCourier }) {
           </>
         );
 
-      case "assigned":
+      case "Assigned":
         return (
           <>
             <a
@@ -968,11 +972,17 @@ export default function AllOrders() {
 
         shipStatus: (() => {
           switch (order.status) {
-            case "pending_verification":
+            case "new":
               return "Pending";
 
+            case "verified":
+              return "Verified";
+
             case "packed":
-              return "Picked Up";
+              return "Packed";
+
+            case "assigned":
+              return "Assigned";
 
             case "shipped":
             case "in_transit":
@@ -987,6 +997,9 @@ export default function AllOrders() {
             case "returned":
               return "Returned";
 
+            case "cancelled":
+              return "Cancelled";
+
             default:
               return "Pending";
           }
@@ -994,11 +1007,17 @@ export default function AllOrders() {
 
         orderStatus: (() => {
           switch (order.status) {
-            case "pending_verification":
-              return "Pending Verification";
+            case "new":
+              return "New";
+
+            case "verified":
+              return "Verified";
 
             case "packed":
               return "Packed";
+
+            case "assigned":
+              return "Assigned";
 
             case "shipped":
             case "in_transit":
@@ -1013,8 +1032,11 @@ export default function AllOrders() {
             case "returned":
               return "Returned";
 
+              case "cancelled":
+                return "Cancelled";
+
             default:
-              return "Pending Verification";
+              return "New";
           }
         })(),
 
@@ -1054,7 +1076,7 @@ export default function AllOrders() {
       // Smooth UI synchronization: if the active record is open in the drawer, keep it in sync
       setDrawerOrder(prev => prev && prev.id === orderNumber ? {
         ...prev,
-        orderStatus: newStatus === "packed" ? "Packed" : newStatus === "pending_verification" ? "Pending Verification" : "Delivered"
+        orderStatus: newStatus === "packed" ? "Packed" : newStatus === "new" ? "New" : newStatus === "verified" ? "Verified" : newStatus === "assigned" ? "Assigned" : newStatus === "cancelled" ? "Cancelled" : newStatus === "shipped" ? "Shipped" : newStatus === "in_transit" ? "In Transit" : newStatus=== "delivered" ? "Delivered" : "New" // Map backend status to frontend status
       } : prev);
 
     } catch (err) {
@@ -1063,10 +1085,7 @@ export default function AllOrders() {
     }
   };
 
-  // Replace the existing assignCourier function:
   const assignCourier = (order) => {
-    //  console.log("Assign clicked", order);
-
     setAssignCourierOrder(order);
   };
 
@@ -1320,7 +1339,7 @@ export default function AllOrders() {
             fetchOrders();
             setShowCreate(false);
           }}
-          />
+        />
       )}
 
       {assignCourierOrder && (

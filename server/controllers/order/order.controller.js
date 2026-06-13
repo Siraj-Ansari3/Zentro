@@ -48,8 +48,8 @@ export const createOrder = async (req, res) => {
       name: item.name,
       sku: item.sku || "",
       quantity: item.quantity,
-      unitPrice: item.price,                        
-      totalPrice: item.price * item.quantity,       
+      unitPrice: item.price,
+      totalPrice: item.price * item.quantity,
     }));
 
     // ─────────────────────────────
@@ -109,8 +109,12 @@ export const createOrder = async (req, res) => {
       paymentMethod,
 
       subtotal,
-      shippingFee,                  
+      shippingFee,
       totalAmount,
+
+      packingStatus: "pending",
+      verificationStatus: "pending",
+      status: "new",
 
       ...(notes?.length && {
         notes: notes.map((text) => ({
@@ -193,10 +197,10 @@ export const getAllOrders = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
   try {
     const { orderNumber, status } = req.body;
-    const storeId = req.storeId; 
-    const userId = req.user.id;   
+    const storeId = req.storeId;
+    const userId = req.user.id;
 
-    console.log(orderNumber, status, storeId, userId);
+    console.log(orderNumber, status,);
 
     // 1. Basic Validation
     if (!orderNumber || !status) {
@@ -208,9 +212,15 @@ export const updateOrderStatus = async (req, res) => {
 
     // Explicit validation matching your structural schema Enums
     const validStatuses = [
-      "pending_verification", "confirmed", "packed", "ready_to_ship",
-      "assigned", "booked", "shipped", "in_transit", "delivered",
-      "failed_delivery", "returned", "cancelled"
+      "new",
+      "verified",
+      "assigned",
+      "shipped",
+      "in_transit",
+      "delivered",
+      "failed_delivery",
+      "returned",
+      "cancelled"
     ];
 
     if (!validStatuses.includes(status)) {
@@ -231,27 +241,42 @@ export const updateOrderStatus = async (req, res) => {
     }
 
     // 3. Build Dynamic Fields Modifications Base Objects
-    const updateFields = { status };
+    const updateFields = {};
     let timelineMessage = `Order status updated to ${status.replace("_", " ")}`;
 
     // Handle pipeline structural changes dependencies dynamically
-    if (status === "packed") {
+    if (status === "verified") {
+      updateFields.status = "verified"
       updateFields.verificationStatus = "verified";
+      timelineMessage = "Order verified successfully.";
+    }
+
+    if (status === "packed") {
+      // updateFields.verificationStatus = "verified";
       updateFields.packingStatus = "packed";
-      timelineMessage = "Order verified and packed successfully.";
-    } 
-    
+      timelineMessage = "Order packed successfully.";
+    }
+
+    // if (status === "ready_to_ship") {
+    //   updateFields.verificationStatus = "verified";
+    //   updateFields.packingStatus = "packed";
+    //   updateFields.readyToShipAt = new Date();
+    //   timelineMessage = "Order is ready to ship.";
+    // }
+
+
+
     if (status === "delivered") {
       updateFields.deliveredAt = new Date();
       updateFields.paymentStatus = "paid"; // Assuming completion means settlement for cash allocations
       timelineMessage = "Order marked as delivered.";
     }
 
-    if (status === "pending_verification") {
-      updateFields.verificationStatus = "pending";
-      updateFields.packingStatus = "pending";
-      timelineMessage = "Order returned back to pending verification queue.";
-    }
+    // if (status === "pending_verification") {
+    //   updateFields.verificationStatus = "pending";
+    //   // updateFields.packingStatus = "pending";
+    //   timelineMessage = "Order returned back to pending verification queue.";
+    // }
 
     // 4. Update Document and Append to Operations Timeline Array
     const updatedOrder = await Order.findOneAndUpdate(
