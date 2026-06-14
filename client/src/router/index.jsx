@@ -10,6 +10,7 @@ import ProfilePage from "../pages/profile/ProfilePage";
 import StoreOnboarding from "../pages/storeSecurity/StoreOnBoarding";
 import PackingQueue from "../pages/warehouse/PackingQueue";
 import DispatchQueue from "../pages/warehouse/DispatchQueue";
+import ReadyToShip from "../pages/warehouse/ReadyToShip";
 
 function Placeholder({ title }) {
   return (
@@ -57,7 +58,7 @@ export default function AppRouter() {
       {/* Warehouse */}
       <Route path="/warehouse/packing" element={<PackingQueue/>} />
       <Route path="/warehouse/dispatch" element={<DispatchQueue/>} />
-      <Route path="/warehouse/ready" element={<Placeholder title="Ready To Ship" />} />
+      <Route path="/warehouse/ready" element={<ReadyToShip/>} />
       <Route path="/warehouse/checkpoints" element={<Placeholder title="Fulfillment Checkpoints" />} />
       <Route path="/warehouse/employees" element={<Placeholder title="Employee Activity" />} />
 

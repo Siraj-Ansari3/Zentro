@@ -509,3 +509,75 @@ export const getUnassignedOrders = async (req, res) => {
     });
   }
 };
+
+
+
+export const getReadyToShipOrders = async (req, res) => {
+  try {
+    // Securely provided by your requireStoreAccess middleware
+    const storeId = req.storeId;
+
+    const {
+      page = 1,
+      limit = 20,
+      search = "",
+      courier = "",
+      sortBy = "updatedAt",
+      sortOrder = "desc",
+    } = req.query;
+
+    // Build base query matching packed orders booked with tracking data
+    const query = {
+      storeId,
+      status: { $in: ["assigned", "booked", "ready_to_ship"] },
+    };
+
+    // Filter by specific courier if selected in UI
+    if (courier) {
+      query.courier = courier;
+    }
+
+    // Support barcode scanners searching tracking IDs directly
+    if (search) {
+      query.$or = [
+        { orderNumber: { $regex: search, $options: "i" } },
+        { trackingNumber: { $regex: search, $options: "i" } },
+        { "shippingAddress.fullName": { $regex: search, $options: "i" } },
+        { "shippingAddress.phone": { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const sortOptions = { [sortBy]: sortOrder === "desc" ? -1 : 1 };
+
+    // Fetch matching data and count profiles concurrently
+    const [orders, totalOrders] = await Promise.all([
+      Order.find(query)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      Order.countDocuments(query),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        orders,
+        pagination: {
+          total: totalOrders,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          totalPages: Math.ceil(totalOrders / parseInt(limit)),
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Fetch Ready to Ship Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error gathering ready-to-ship payloads.",
+      error: error.message,
+    });
+  }
+};

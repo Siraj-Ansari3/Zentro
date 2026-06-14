@@ -1,6 +1,6 @@
 import express from "express";
 
-import { createOrder, getAllOrders, getPendingPackingOrders, getUnassignedOrders, updateOrderStatus, updatePackingStatus } from "../../controllers/order/order.controller.js";
+import { createOrder, getAllOrders, getPendingPackingOrders, getReadyToShipOrders, getUnassignedOrders, updateOrderStatus, updatePackingStatus } from "../../controllers/order/order.controller.js";
 import { requireStoreAccess } from "../../middlewares/requireStoreAccess.js"
 import { verifyAuth } from "../../middlewares/verifyAuth.js";
 import { attachUser } from "../../middlewares/attachUser.js";
@@ -63,4 +63,12 @@ router.get("/unassigned",
     getUnassignedOrders
 );
 
+
+router.get(
+  "/ready-to-ship",
+  verifyAuth,
+  attachUser,
+  requireStoreAccess("super_admin", "admin", "manager", "dispatcher"),
+  getReadyToShipOrders
+);
 export default router;
