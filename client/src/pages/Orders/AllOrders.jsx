@@ -448,7 +448,7 @@ function OrderDrawer({ order, onClose, onUpdateStatus, onAssignCourier }) {
             <button
               onClick={async () => {
                 setLoading(true);
-                await onUpdateStatus(order.id, "verified"); // Moves to Verified phase
+                await onUpdateStatus(order.id, "verified"); 
                 setLoading(false);
               }}
               disabled={loading}
@@ -505,7 +505,7 @@ function OrderDrawer({ order, onClose, onUpdateStatus, onAssignCourier }) {
         return (
           <>
             <a
-              href={order.raw.trackingUrl} // Fallback template link
+              href={order.raw.trackingUrl} 
               target="_blank"
               rel="noreferrer"
               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-500 text-white text-xs font-bold hover:bg-blue-600 transition-colors"

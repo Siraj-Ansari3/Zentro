@@ -8,6 +8,8 @@ import CourierIntegration from "../pages/integrations/CourierIntegration";
 import JoinRequests from "../pages/teams/joinRequests";
 import ProfilePage from "../pages/profile/ProfilePage";
 import StoreOnboarding from "../pages/storeSecurity/StoreOnBoarding";
+import PackingQueue from "../pages/warehouse/PackingQueue";
+import DispatchQueue from "../pages/warehouse/DispatchQueue";
 
 function Placeholder({ title }) {
   return (
@@ -53,8 +55,8 @@ export default function AppRouter() {
       <Route path="/courier/performance" element={<CourierPerformance />} />
 
       {/* Warehouse */}
-      <Route path="/warehouse/packing" element={<Placeholder title="Packing Queue" />} />
-      <Route path="/warehouse/dispatch" element={<Placeholder title="Dispatch Queue" />} />
+      <Route path="/warehouse/packing" element={<PackingQueue/>} />
+      <Route path="/warehouse/dispatch" element={<DispatchQueue/>} />
       <Route path="/warehouse/ready" element={<Placeholder title="Ready To Ship" />} />
       <Route path="/warehouse/checkpoints" element={<Placeholder title="Fulfillment Checkpoints" />} />
       <Route path="/warehouse/employees" element={<Placeholder title="Employee Activity" />} />

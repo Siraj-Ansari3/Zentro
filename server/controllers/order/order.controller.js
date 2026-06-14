@@ -88,6 +88,19 @@ export const createOrder = async (req, res) => {
       customerId = newCustomer._id; // Uncomment if you want to use this customerId in the order
     }
 
+    let status;
+    let verificationStatus;
+    let packingStatus;
+
+    if (paymentMethod === "prepaid" || paymentMethod === "bank_transfer") {
+      status = "verified";
+      verificationStatus = "verified";
+      packingStatus = "pending";
+    } else {
+      status = "new";
+      verificationStatus = "pending";
+      packingStatus = "pending";
+    }
     // ─────────────────────────────
     // CREATE ORDER
     // ─────────────────────────────
@@ -112,9 +125,9 @@ export const createOrder = async (req, res) => {
       shippingFee,
       totalAmount,
 
-      packingStatus: "pending",
-      verificationStatus: "pending",
-      status: "new",
+      packingStatus,
+      verificationStatus,
+      status,
 
       ...(notes?.length && {
         notes: notes.map((text) => ({
@@ -189,10 +202,6 @@ export const getAllOrders = async (req, res) => {
     });
   }
 };
-
-
-
-
 
 export const updateOrderStatus = async (req, res) => {
   try {
@@ -306,6 +315,196 @@ export const updateOrderStatus = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Internal server error adjusting order status parameters.",
+      error: error.message,
+    });
+  }
+};
+
+
+export const getPendingPackingOrders = async (req, res) => {
+  try {
+    // Guaranteed to exist and be authorized by your requireStoreAccess middleware
+    const storeId = req.storeId;
+
+    // 1. Extract pagination, sorting, and search parameter filters from query
+    const {
+      page = 1,
+      limit = 20,
+      search = "",
+      sortBy = "createdAt",
+      sortOrder = "desc"
+    } = req.query;
+
+    // 2. Construct the query object targeting 'pending' packing status
+    const query = {
+      storeId,
+      packingStatus: "pending"
+    };
+
+    // If search is utilized (searching by Order ID, customer name, or phone)
+    if (search) {
+      query.$or = [
+        { orderNumber: { $regex: search, $options: "i" } },
+        { "shippingAddress.fullName": { $regex: search, $options: "i" } },
+        { "shippingAddress.phone": { $regex: search, $options: "i" } }
+      ];
+    }
+
+    // 3. Configure pagination skips and sorting models
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const sortOptions = { [sortBy]: sortOrder === "desc" ? -1 : 1 };
+
+    // 4. Query DB in parallel for optimal scaling performance
+    // Using .lean() optimization to strip heavy Mongoose document wrappers
+    const [orders, totalOrders] = await Promise.all([
+      Order.find(query)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      Order.countDocuments(query)
+    ]);
+
+    // 5. Return paginated data block mapping exactly to frontend table expectations
+    return res.status(200).json({
+      success: true,
+      data: {
+        orders,
+        pagination: {
+          total: totalOrders,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          totalPages: Math.ceil(totalOrders / parseInt(limit)),
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error("Fetch Pending Packing Orders Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching pending packing orders.",
+      error: error.message
+    });
+  }
+};
+
+export const updatePackingStatus = async (req, res) => {
+  try {
+    const { orderNumber, packingStatus } = req.body;
+    const storeId = req.storeId;
+    const userId = req.user.id;
+    // 1. Basic Validation
+    if (!orderNumber || !packingStatus) {
+      return res.status(400).json({
+        success: false,
+        message: "orderNumber and packingStatus are required fields.",
+      });
+    }
+
+    // Explicit validation matching your structural schema Enums
+    const validPackingStatuses = ["pending", "in_progress", "packed"];
+    if (!validPackingStatuses.includes(packingStatus)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid packingStatus code: '${packingStatus}'`,
+      });
+    }
+    // 2. Locate the Order
+    const order = await Order.findOneAndUpdate(
+      { orderNumber, storeId },
+      { packingStatus },
+      { new: true }
+    );
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Packing status updated successfully.",
+      order,
+    });
+
+  } catch (error) {
+    console.error("Packing Status Update System Error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error adjusting packing status parameters.",
+      error: error.message,
+    });
+  }
+}
+
+
+
+export const getUnassignedOrders = async (req, res) => {
+  try {
+    // Securely attached by your requireStoreAccess middleware
+    const storeId = req.storeId;
+
+    const {
+      page = 1,
+      limit = 15,
+      search = "",
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = req.query;
+
+    // Build query: Must be 'packed' and have no courier tracking details assigned yet
+    const query = {
+      storeId,
+      status: "verified",
+      $or: [
+        { trackingNumber: "" },
+        { trackingNumber: { $exists: false } },
+        { courierId: null }
+      ]
+    };
+
+    // Support searching by Order ID, customer name, or phone number
+    if (search) {
+      query.$or = [
+        { orderNumber: { $regex: search, $options: "i" } },
+        { "shippingAddress.fullName": { $regex: search, $options: "i" } },
+        { "shippingAddress.phone": { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const sortOptions = { [sortBy]: sortOrder === "desc" ? -1 : 1 };
+
+    // Fetch records and totals in parallel for maximum database speed
+    const [orders, totalOrders] = await Promise.all([
+      Order.find(query)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      Order.countDocuments(query),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        orders,
+        pagination: {
+          total: totalOrders,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          totalPages: Math.ceil(totalOrders / parseInt(limit)),
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Fetch Unassigned Orders Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching unassigned orders.",
       error: error.message,
     });
   }
