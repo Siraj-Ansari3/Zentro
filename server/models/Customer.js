@@ -63,6 +63,16 @@ const customerSchema = new mongoose.Schema(
       default: "low",
     },
 
+    fraudScore: {
+      type: Number,
+      default: 0,
+    },
+
+    riskScore: {
+      type: Number,
+      default: 0,
+    },
+
     // ─────────────────────────────────────
     // CUSTOMER ANALYTICS
     // ─────────────────────────────────────

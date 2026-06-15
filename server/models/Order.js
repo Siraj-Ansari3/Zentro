@@ -240,6 +240,7 @@ const orderSchema = new mongoose.Schema(
     },
 
     deliveredAt: Date,
+    shippedAt: Date,
 
     failedReason: {
       type: String,
@@ -259,11 +260,11 @@ const orderSchema = new mongoose.Schema(
       default: 0,
     },
 
-    riskLevel: {
-      type: String,
-      enum: ["low", "medium", "high"],
-      default: "low",
-    },
+    // riskLevel: {
+    //   type: String,
+    //   enum: ["low", "medium", "high"],
+    //   default: "low",
+    // },
 
     flaggedReasons: [
       {

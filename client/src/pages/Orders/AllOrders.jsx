@@ -448,7 +448,7 @@ function OrderDrawer({ order, onClose, onUpdateStatus, onAssignCourier }) {
             <button
               onClick={async () => {
                 setLoading(true);
-                await onUpdateStatus(order.id, "verified"); 
+                await onUpdateStatus(order.id, "verified");
                 setLoading(false);
               }}
               disabled={loading}
@@ -461,7 +461,7 @@ function OrderDrawer({ order, onClose, onUpdateStatus, onAssignCourier }) {
               onClick={async () => {
                 if (confirm("Are you sure you want to cancel this order?")) {
                   setLoading(true);
-                  await onUpdateStatus(order.id, "failed_delivery");
+                  await onUpdateStatus(order.id, "failed_delivery", "Order cancelled manually from dashboard");
                   setLoading(false);
                 }
               }}
@@ -505,7 +505,7 @@ function OrderDrawer({ order, onClose, onUpdateStatus, onAssignCourier }) {
         return (
           <>
             <a
-              href={order.raw.trackingUrl} 
+              href={order.raw.trackingUrl}
               target="_blank"
               rel="noreferrer"
               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-500 text-white text-xs font-bold hover:bg-blue-600 transition-colors"
@@ -524,6 +524,30 @@ function OrderDrawer({ order, onClose, onUpdateStatus, onAssignCourier }) {
             >
               Force Mark Delivered
             </button>
+          </>
+        );
+
+      case "Shipped":
+        return (
+          <>
+            <div className="flex-1 flex items-center justify-center text-center p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium flex items-center justify-center gap-2">
+              <Loader2 size={14} className="animate-spin" /> This order is currently in transit.
+            </div>
+
+            {/* <button
+              onClick={async () => {
+                if (confirm("Are you sure you want to cancel this order?")) {
+                  setLoading(true);
+                  await onUpdateStatus(order.id, "failed_delivery", "manually cancelled while in transit");
+                  setLoading(false);
+                }
+              }}
+              disabled={loading}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-red-400 text-xs font-semibold hover:bg-red-400/10 hover:border-red-500/20 transition-colors"
+            >
+              Cancel Order
+            </button> */}
+
           </>
         );
 
@@ -942,7 +966,6 @@ export default function AllOrders() {
 
       const fetchedOrders = response?.data?.orders || [];
 
-      console.log("Fetched orders:", fetchedOrders);
       // transform backend data into frontend table shape
       const formattedOrders = fetchedOrders.map((order) => ({
         id: order.orderNumber,
@@ -1030,8 +1053,8 @@ export default function AllOrders() {
             case "returned":
               return "Returned";
 
-              case "cancelled":
-                return "Cancelled";
+            case "cancelled":
+              return "Cancelled";
 
             default:
               return "New";
@@ -1060,12 +1083,13 @@ export default function AllOrders() {
 
 
   // Place this inside your AllOrders component, right below fetchOrders
-  const handleUpdateOrderStatus = async (orderNumber, newStatus) => {
+  const handleUpdateOrderStatus = async (orderNumber, newStatus, failedReason = "") => {
     try {
       await api.put(`/order/update_status`, {
         storeId: activeStore?.storeId, // storeId passed cleanly in the body
         orderNumber,
         status: newStatus,
+        failedReason,
       });
 
       // Refresh data so the status change populates across tabs
@@ -1074,7 +1098,7 @@ export default function AllOrders() {
       // Smooth UI synchronization: if the active record is open in the drawer, keep it in sync
       setDrawerOrder(prev => prev && prev.id === orderNumber ? {
         ...prev,
-        orderStatus: newStatus === "packed" ? "Packed" : newStatus === "new" ? "New" : newStatus === "verified" ? "Verified" : newStatus === "assigned" ? "Assigned" : newStatus === "cancelled" ? "Cancelled" : newStatus === "shipped" ? "Shipped" : newStatus === "in_transit" ? "In Transit" : newStatus=== "delivered" ? "Delivered" : "New" // Map backend status to frontend status
+        orderStatus: newStatus === "packed" ? "Packed" : newStatus === "new" ? "New" : newStatus === "verified" ? "Verified" : newStatus === "assigned" ? "Assigned" : newStatus === "cancelled" ? "Cancelled" : newStatus === "shipped" ? "Shipped" : newStatus === "in_transit" ? "In Transit" : newStatus === "delivered" ? "Delivered" : "New" // Map backend status to frontend status
       } : prev);
 
     } catch (err) {
