@@ -141,6 +141,15 @@ export const createOrder = async (req, res) => {
     // UPDATE STORE METRICS
     // ─────────────────────────────
 
+    // await Customer.findOneAndUpdate(
+    //   { _id: customerId },
+    //   {
+    //     $inc: {
+    //       "metrics.totalOrders": ++1,
+    //     }
+    //   }
+    // );
+
     await Store.findByIdAndUpdate(storeId, {
       $inc: {
         "metrics.totalOrders": 1,
@@ -205,9 +214,10 @@ export const getAllOrders = async (req, res) => {
 
 export const updateOrderStatus = async (req, res) => {
   try {
-    const { orderNumber, status } = req.body;
+    const { orderNumber, status, failedReason="" } = req.body;
     const storeId = req.storeId;
     const userId = req.user.id;
+    console.log("hello")
 
     console.log(orderNumber, status,);
 
@@ -273,6 +283,12 @@ export const updateOrderStatus = async (req, res) => {
     //   timelineMessage = "Order is ready to ship.";
     // }
 
+    if (status === "shipped") {
+      updateFields.status = "shipped";
+      updateFields.shippedAt = new Date();
+      timelineMessage = "Order marked as shipped.";
+    }
+
 
 
     if (status === "delivered") {
@@ -281,6 +297,11 @@ export const updateOrderStatus = async (req, res) => {
       timelineMessage = "Order marked as delivered.";
     }
 
+    if (status === "failed_delivery") {
+      updateFields.status = "failed_delivery";
+      updateFields.failedReason = failedReason
+      timelineMessage = "Order marked as failed delivery.";
+    }
     // if (status === "pending_verification") {
     //   updateFields.verificationStatus = "pending";
     //   // updateFields.packingStatus = "pending";

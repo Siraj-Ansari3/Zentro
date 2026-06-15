@@ -127,7 +127,7 @@ export default function ReadyToShip() {
       await Promise.all(
         Array.from(selected).map(orderNum => 
           api.put("/order/update_status", {
-            storeId: activeStore.storeId, // storeId parameter mapped to target bodies
+            storeId: activeStore?.storeId, // storeId parameter mapped to target bodies
             orderNumber: orderNum,
             status: "shipped"
           })
