@@ -70,7 +70,7 @@ const customerSchema = new mongoose.Schema(
 
     riskScore: {
       type: Number,
-      default: 0,
+      default: 30,
     },
 
     // ─────────────────────────────────────

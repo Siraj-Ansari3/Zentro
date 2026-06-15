@@ -217,9 +217,7 @@ export const updateOrderStatus = async (req, res) => {
     const { orderNumber, status, failedReason="" } = req.body;
     const storeId = req.storeId;
     const userId = req.user.id;
-    console.log("hello")
 
-    console.log(orderNumber, status,);
 
     // 1. Basic Validation
     if (!orderNumber || !status) {
@@ -261,6 +259,7 @@ export const updateOrderStatus = async (req, res) => {
 
     // 3. Build Dynamic Fields Modifications Base Objects
     const updateFields = {};
+    let adjustedRiskScore = 0; // Default no change, will adjust based on status transitions
     let timelineMessage = `Order status updated to ${status.replace("_", " ")}`;
 
     // Handle pipeline structural changes dependencies dynamically
@@ -292,12 +291,14 @@ export const updateOrderStatus = async (req, res) => {
 
 
     if (status === "delivered") {
+      adjustedRiskScore = -5; // Example: reduce risk score on successful delivery
       updateFields.deliveredAt = new Date();
       updateFields.paymentStatus = "paid"; // Assuming completion means settlement for cash allocations
       timelineMessage = "Order marked as delivered.";
     }
 
     if (status === "failed_delivery") {
+      adjustedRiskScore = 5;
       updateFields.status = "failed_delivery";
       updateFields.failedReason = failedReason
       timelineMessage = "Order marked as failed delivery.";
@@ -324,6 +325,12 @@ export const updateOrderStatus = async (req, res) => {
       },
       { new: true, runValidators: true }
     );
+
+    await Customer.findByIdAndUpdate(updatedOrder.customerId, {
+      $inc: {
+        riskScore: adjustedRiskScore,
+      },
+    });
 
     return res.status(200).json({
       success: true,
