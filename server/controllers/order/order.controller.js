@@ -214,7 +214,8 @@ export const getAllOrders = async (req, res) => {
 
 export const updateOrderStatus = async (req, res) => {
   try {
-    const { orderNumber, status, failedReason="" } = req.body;
+    const { orderNumber, status } = req.body;
+    const statusChangeReason = req.body.statusChangeReason || "";
     const storeId = req.storeId;
     const userId = req.user.id;
 
@@ -288,19 +289,32 @@ export const updateOrderStatus = async (req, res) => {
       timelineMessage = "Order marked as shipped.";
     }
 
-
-
     if (status === "delivered") {
+      if (statusChangeReason === "Force Marked Delivered") {
       adjustedRiskScore = -5; // Example: reduce risk score on successful delivery
+      }
+      updateFields.status = "delivered";
       updateFields.deliveredAt = new Date();
-      updateFields.paymentStatus = "paid"; // Assuming completion means settlement for cash allocations
+      updateFields.paymentStatus = "paid"; 
       timelineMessage = "Order marked as delivered.";
     }
 
     if (status === "failed_delivery") {
-      adjustedRiskScore = 5;
+
+      console.log("Status change reason for failed delivery:", statusChangeReason);
+      if (statusChangeReason=== "Customer Not Available") {
+        adjustedRiskScore = 5; // Moderate risk increase for no-shows
+      } else if (statusChangeReason === "Incorrect Address") {
+        adjustedRiskScore = 10; // Higher risk increase for address issues
+      } else if (statusChangeReason === "Refused at Delivery") {
+        adjustedRiskScore = 15; // Higher risk increase for refusals
+      } else if (statusChangeReason === "Manually Canceled") {
+        adjustedRiskScore = 5; 
+      } else {
+        adjustedRiskScore = 5; // Default risk increase for other failure reasons
+      }
       updateFields.status = "failed_delivery";
-      updateFields.failedReason = failedReason
+      updateFields.failedReason = statusChangeReason;
       timelineMessage = "Order marked as failed delivery.";
     }
     // if (status === "pending_verification") {
