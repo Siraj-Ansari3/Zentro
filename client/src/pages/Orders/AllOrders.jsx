@@ -448,7 +448,7 @@ function OrderDrawer({ order, onClose, onUpdateStatus, onAssignCourier }) {
             <button
               onClick={async () => {
                 setLoading(true);
-                await onUpdateStatus(order.id, "verified");
+                await onUpdateStatus(order.orderNumber, "verified");
                 setLoading(false);
               }}
               disabled={loading}
@@ -461,7 +461,7 @@ function OrderDrawer({ order, onClose, onUpdateStatus, onAssignCourier }) {
               onClick={async () => {
                 if (confirm("Are you sure you want to cancel this order?")) {
                   setLoading(true);
-                  await onUpdateStatus(order.id, "failed_delivery", "Order cancelled manually from dashboard");
+                  await onUpdateStatus(order.orderNumber, "failed_delivery", "Manually Canceled");
                   setLoading(false);
                 }
               }}
@@ -489,7 +489,7 @@ function OrderDrawer({ order, onClose, onUpdateStatus, onAssignCourier }) {
             {/* <button
               onClick={async () => {
                 setLoading(true);
-                await onUpdateStatus(order.id, "pending_verification");
+                await onUpdateStatus(order.orderNumber, "pending_verification");
                 setLoading(false);
               }}
               disabled={loading}
@@ -516,7 +516,7 @@ function OrderDrawer({ order, onClose, onUpdateStatus, onAssignCourier }) {
             <button
               onClick={async () => {
                 setLoading(true);
-                await onUpdateStatus(order.id, "delivered");
+                await onUpdateStatus(order.orderNumber, "delivered", "Force Marked Delivered");
                 setLoading(false);
               }}
               disabled={loading}
@@ -538,7 +538,7 @@ function OrderDrawer({ order, onClose, onUpdateStatus, onAssignCourier }) {
               onClick={async () => {
                 if (confirm("Are you sure you want to cancel this order?")) {
                   setLoading(true);
-                  await onUpdateStatus(order.id, "failed_delivery", "manually cancelled while in transit");
+                  await onUpdateStatus(order.orderNumber, "failed_delivery", "manually cancelled while in transit");
                   setLoading(false);
                 }
               }}
@@ -574,7 +574,7 @@ function OrderDrawer({ order, onClose, onUpdateStatus, onAssignCourier }) {
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] flex-shrink-0">
           <div>
             <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-sm font-bold text-white font-mono">{order.id}</span>
+              <span className="text-sm font-bold text-white font-mono">{order.orderNumber}</span>
               <StatusBadge status={order.orderStatus} />
             </div>
             <p className="text-[11px] text-slate-500">{order.createdAt} · {order.items} item{order.items > 1 ? "s" : ""}</p>
@@ -685,12 +685,12 @@ function TableRow({ order, selected, onSelect, onView, onAssignCourier }) {
   return (
     <tr onClick={() => onView(order)} className={`border-t border-white/[0.04] cursor-pointer transition-colors group ${selected ? "bg-amber-400/[0.05]" : "hover:bg-white/[0.025]"} ${order.risk === "high" ? "border-l-2 border-l-red-400/40" : ""}`}>
       <td className="pl-4 pr-2 py-3" onClick={e => e.stopPropagation()}>
-        <input type="checkbox" checked={selected} onChange={e => onSelect(order.id, e.target.checked)} className="w-3.5 h-3.5 rounded border-white/20 bg-white/5 accent-amber-400 cursor-pointer" />
+        <input type="checkbox" checked={selected} onChange={e => onSelect(order.orderNumber, e.target.checked)} className="w-3.5 h-3.5 rounded border-white/20 bg-white/5 accent-amber-400 cursor-pointer" />
       </td>
       <td className="px-3 py-3 whitespace-nowrap">
         <div className="flex items-center gap-1.5">
-          <span className="text-xs font-mono font-semibold text-slate-200">{order.id}</span>
-          <button onClick={e => { e.stopPropagation(); navigator.clipboard?.writeText(order.id) }} className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-slate-400 transition-all"><Copy size={11} /></button>
+          <span className="text-xs font-mono font-semibold text-slate-200">{order.orderNumber}</span>
+          <button onClick={e => { e.stopPropagation(); navigator.clipboard?.writeText(order.orderNumber) }} className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-slate-400 transition-all"><Copy size={11} /></button>
         </div>
         <span className="text-[10px] text-slate-600">{order.createdAt}</span>
       </td>
@@ -811,7 +811,7 @@ function AssignCourierModal({ order, onClose, onAssigned }) {
     try {
       const res = await api.post("/order/assign_order", {
         courier: courierName,
-        orderNumber: order.id,
+        orderNumber: order.orderNumber,
       }, {
         params: {
           storeId: activeStore?.storeId
@@ -857,7 +857,7 @@ function AssignCourierModal({ order, onClose, onAssigned }) {
                   Assign Courier
                 </h2>
                 <p className="text-[11px] text-slate-500">
-                  Order <span className="font-mono text-slate-400">{order.id}</span>
+                  Order <span className="font-mono text-slate-400">{order.orderNumber}</span>
                 </p>
               </div>
             </div>
@@ -968,7 +968,7 @@ export default function AllOrders() {
 
       // transform backend data into frontend table shape
       const formattedOrders = fetchedOrders.map((order) => ({
-        id: order.orderNumber,
+        orderNumber: order.orderNumber,
 
         customer: {
           name: order?.shippingAddress?.fullName || "Unknown Customer",
@@ -1083,20 +1083,20 @@ export default function AllOrders() {
 
 
   // Place this inside your AllOrders component, right below fetchOrders
-  const handleUpdateOrderStatus = async (orderNumber, newStatus, failedReason = "") => {
+  const handleUpdateOrderStatus = async (orderNumber, newStatus, statusChangeReason = "") => {
     try {
       await api.put(`/order/update_status`, {
         storeId: activeStore?.storeId, // storeId passed cleanly in the body
         orderNumber,
         status: newStatus,
-        failedReason,
+        statusChangeReason, // optional reason for status change, useful for audit logs and debugging
       });
 
       // Refresh data so the status change populates across tabs
       await fetchOrders();
 
       // Smooth UI synchronization: if the active record is open in the drawer, keep it in sync
-      setDrawerOrder(prev => prev && prev.id === orderNumber ? {
+      setDrawerOrder(prev => prev && prev.orderNumber === orderNumber ? {
         ...prev,
         orderStatus: newStatus === "packed" ? "Packed" : newStatus === "new" ? "New" : newStatus === "verified" ? "Verified" : newStatus === "assigned" ? "Assigned" : newStatus === "cancelled" ? "Cancelled" : newStatus === "shipped" ? "Shipped" : newStatus === "in_transit" ? "In Transit" : newStatus === "delivered" ? "Delivered" : "New" // Map backend status to frontend status
       } : prev);
@@ -1123,7 +1123,7 @@ export default function AllOrders() {
       if (activeTab !== "all" && o.orderStatus !== activeTab) return false;
       if (search) {
         const q = search.toLowerCase();
-        if (!o.id.toLowerCase().includes(q) &&
+        if (!o.orderNumber.toLowerCase().includes(q) &&
           !o.customer.name.toLowerCase().includes(q) &&
           !o.customer.phone.includes(q)) return false;
       }
@@ -1223,11 +1223,11 @@ export default function AllOrders() {
                 <th className="pl-4 pr-2 py-3">
                   <input
                     type="checkbox"
-                    checked={paginated.length > 0 && paginated.every(o => selected.has(o.id))}
+                    checked={paginated.length > 0 && paginated.every(o => selected.has(o.orderNumber))}
                     onChange={e =>
                       setSelected(
                         e.target.checked
-                          ? new Set(paginated.map(o => o.id))
+                          ? new Set(paginated.map(o => o.orderNumber))
                           : new Set()
                       )
                     }
@@ -1319,12 +1319,12 @@ export default function AllOrders() {
               ) : (
                 paginated.map(order => (
                   <TableRow
-                    key={order.id}
+                    key={order.orderNumber}
                     order={order}
-                    selected={selected.has(order.id)}
-                    onSelect={(id, checked) => {
+                    selected={selected.has(order.orderNumber)}
+                    onSelect={(orderNumber, checked) => {
                       const n = new Set(selected);
-                      checked ? n.add(id) : n.delete(id);
+                      checked ? n.add(orderNumber) : n.delete(orderNumber);
                       setSelected(n);
                     }}
                     onView={setDrawerOrder}
