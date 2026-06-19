@@ -28,10 +28,10 @@ const orderSchema = new mongoose.Schema(
       index: true,
     },
 
-    courier: {
-      type: String,
-      default: "",
-    },
+    // courier: {
+    //   type: String,
+    //   default: "",
+    // },
 
     trackingNumber: {
       type: String,
@@ -190,9 +190,9 @@ const orderSchema = new mongoose.Schema(
       },
     ],
 
-    // ─────────────────────────────────────
+    // ───────────────────────────────────
     // SHIPPING INFO
-    // ─────────────────────────────────────
+    // ───────────────────────────────────
     shippingAddress: {
       fullName: String,
       phone: String,

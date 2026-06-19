@@ -434,7 +434,6 @@ function OrderDrawer({ order, onClose, onUpdateStatus, onAssignCourier }) {
 
   if (!order) return null;
 
-  console.log("Rendering OrderDrawer for order:", order);
 
   // ─────────────────────────────────────────────────────────────
   // DYNAMIC ACTION RENDERER
@@ -642,7 +641,6 @@ function OrderDrawer({ order, onClose, onUpdateStatus, onAssignCourier }) {
 function ActionDropdown({ order, onView, onAssignCourier }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
-  console.log(order)
   useEffect(() => {
     const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) };
     document.addEventListener("mousedown", h);
@@ -965,8 +963,8 @@ export default function AllOrders() {
       });
 
       const fetchedOrders = response?.data?.orders || [];
-
       // transform backend data into frontend table shape
+
       const formattedOrders = fetchedOrders.map((order) => ({
         orderNumber: order.orderNumber,
 
@@ -989,7 +987,7 @@ export default function AllOrders() {
 
         risk: order.customerId?.riskLevel || "unknown",
 
-        courier: order?.courier || null,
+        courier: order?.courierId?.name || null,
 
         shipStatus: (() => {
           switch (order.status) {
