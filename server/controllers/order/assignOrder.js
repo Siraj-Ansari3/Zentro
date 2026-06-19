@@ -136,7 +136,7 @@ export const assignOrder = async (req, res) => {
                     trackingNumber: trackingNumber,
                     trackingUrl,
                     courierId,
-                    courier: existingCourier.name,
+                    // courier: existingCourier.name,
                     assignedAt: new Date(),
                     status: 'assigned',
                     assignedTo: userId,

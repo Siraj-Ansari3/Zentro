@@ -141,14 +141,14 @@ export const createOrder = async (req, res) => {
     // UPDATE STORE METRICS
     // ─────────────────────────────
 
-    // await Customer.findOneAndUpdate(
-    //   { _id: customerId },
-    //   {
-    //     $inc: {
-    //       "metrics.totalOrders": ++1,
-    //     }
-    //   }
-    // );
+    await Customer.findOneAndUpdate(
+      { _id: customerId },
+      {
+        $inc: {
+          "metrics.totalOrders": 1,
+        }
+      }
+    );
 
     await Store.findByIdAndUpdate(storeId, {
       $inc: {
@@ -186,10 +186,10 @@ export const getAllOrders = async (req, res) => {
         path: "customerId",
         select: "customerId name phone email riskLevel trackingNumber",
       })
-      // .populate({
-      //   path: "courierId",
-      //   select: "name",
-      // })
+      .populate({
+        path: "courierId",
+        select: "name",
+      })
       .populate({
         path: "assignedTo",
         select: "displayName email",
@@ -287,35 +287,99 @@ export const updateOrderStatus = async (req, res) => {
       updateFields.status = "shipped";
       updateFields.shippedAt = new Date();
       timelineMessage = "Order marked as shipped.";
+
+      try {
+        await Store.findByIdAndUpdate(storeId, {
+          $inc: {
+            "metrics.activeShipments": 1,
+          },
+        });
+      } catch (error) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to update store metrics after shipping.",
+        });
+      }
     }
 
     if (status === "delivered") {
       if (statusChangeReason === "Force Marked Delivered") {
-      adjustedRiskScore = -5; // Example: reduce risk score on successful delivery
+        adjustedRiskScore = -5; // Example: reduce risk score on successful delivery
       }
       updateFields.status = "delivered";
       updateFields.deliveredAt = new Date();
-      updateFields.paymentStatus = "paid"; 
+      updateFields.paymentStatus = "paid";
       timelineMessage = "Order marked as delivered.";
+
+      try {
+        await Customer.findOneAndUpdate(
+          { _id: order.customerId },
+          {
+            $inc: {
+              "metrics.deliveredOrders": 1,
+              "metrics.totalSpent": order.totalAmount,
+            }
+          }
+
+        );
+
+        await Store.findByIdAndUpdate(storeId, {
+          $inc: {
+            "metrics.deliveredOrders": 1,
+            "metrics.totalRevenue": order.totalAmount,
+            "metrics.activeShipments": -1,
+          },
+        });
+
+      } catch (error) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to update customer metrics after delivery.",
+        });
+      }
     }
 
     if (status === "failed_delivery") {
 
       console.log("Status change reason for failed delivery:", statusChangeReason);
-      if (statusChangeReason=== "Customer Not Available") {
+      if (statusChangeReason === "Customer Not Available") {
         adjustedRiskScore = 5; // Moderate risk increase for no-shows
       } else if (statusChangeReason === "Incorrect Address") {
         adjustedRiskScore = 10; // Higher risk increase for address issues
       } else if (statusChangeReason === "Refused at Delivery") {
         adjustedRiskScore = 15; // Higher risk increase for refusals
       } else if (statusChangeReason === "Manually Canceled") {
-        adjustedRiskScore = 5; 
+        adjustedRiskScore = 5;
       } else {
         adjustedRiskScore = 5; // Default risk increase for other failure reasons
       }
       updateFields.status = "failed_delivery";
       updateFields.failedReason = statusChangeReason;
       timelineMessage = "Order marked as failed delivery.";
+
+
+      try {
+        await Customer.findOneAndUpdate(
+          { _id: order.customerId },
+          {
+            $inc: {
+              "metrics.cancelledOrders": 1,
+            }
+          }
+        );
+
+        await Store.findByIdAndUpdate(storeId, {
+          $inc: {
+            "metrics.cancelledOrders": 1,
+          },
+        });
+
+      } catch (error) {
+        return res.status(500).json({
+          success: false,
+          message: "Failed to update customer metrics after failed delivery.",
+        });
+      }
     }
     // if (status === "pending_verification") {
     //   updateFields.verificationStatus = "pending";
