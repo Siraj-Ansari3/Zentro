@@ -285,21 +285,21 @@ const orderSchema = new mongoose.Schema(
     // ─────────────────────────────────────
     // NOTES
     // ─────────────────────────────────────
-    notes: [
-      {
-        text: String,
+    // notes: [
+    //   {
+    //     text: String,
 
-        createdBy: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-        },
+    //     createdBy: {
+    //       type: mongoose.Schema.Types.ObjectId,
+    //       ref: "User",
+    //     },
 
-        createdAt: {
-          type: Date,
-          default: Date.now,
-        },
-      },
-    ],
+    //     createdAt: {
+    //       type: Date,
+    //       default: Date.now,
+    //     }, 
+    //   },
+    // ],
 
     // ─────────────────────────────────────
     // TIMELINE
