@@ -178,8 +178,9 @@ export default function InternalNotesPage() {
 
   const handleResolve = async (noteId) => {
     try {
-      await api.patch(`/internal_notes/${noteId}/resolve`, {
+      await api.patch(`/internal_notes/resolve`, {
         storeId: activeStore?.storeId,
+        noteId,
       });
       // Optimistically remove from the visible list since query excludes resolved notes
       setNotes((prev) => prev.filter((n) => n._id !== noteId));
