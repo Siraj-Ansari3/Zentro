@@ -6,37 +6,56 @@ import InternalNotes from "../../models/InternalNotes.js";
 
 export const getAllInternalNotes = async (req, res) => {
     try {
-
         const storeId = req?.storeId;
-        const { priority, category, page = 1, limit = 10 } = req.query;
+        const showResolved = req.body?.showResolved || false; // Default to false if not provided
+        
 
-        const query = { storeId, isResolved: false };
+        // 2. Safe Integer Parsing with Fallbacks
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 10;
+        const { priority, category } = req.query;
 
-        if (priority) {
-            query.priority = priority;
+        // 3. Build Query Dynamic Constraints
+        const query = { storeId };
+
+        if (!showResolved) {
+            query.isResolved = false;
         }
 
-        if (category) {
-            query.category = category;
-        }
+        if (priority) query.priority = priority;
+        if (category) query.category = category;
 
-        const internalNotes = await InternalNotes.find(query)
-            .skip((page - 1) * limit)
-            .limit(limit);
+        // 4. Run database queries in parallel for maximum performance
+        const [internalNotes, totalNotes] = await Promise.all([
+            InternalNotes.find(query)
+                .sort({ createdAt: -1 }) // Newest notes first
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .populate("createdBy", "name email"), // Populates author data if needed
+            InternalNotes.countDocuments(query)
+        ]);
 
-
+        // 5. Rich Pagination Metadata API Contract
         return res.status(200).json({
             success: true,
+            pagination: {
+                totalNotes,
+                currentPage: page,
+                totalPages: Math.ceil(totalNotes / limit),
+                hasMore: page * limit < totalNotes
+            },
             internalNotes,
-        })
+        });
+
     } catch (error) {
+        console.error("Internal Notes Retrieval Error:", error); // Log full stack trace internally
         return res.status(500).json({
             success: false,
-            message: "Failed to fetch internal notes",
-            error: error.message
-        })
+            message: "Failed to fetch internal notes.",
+            error: process.env.NODE_ENV === "development" ? error.message : undefined // Don't leak raw errors to clients in prod
+        });
     }
-}
+};
 
 export const markInternalNoteAsResolved = async (req, res) => {
 
