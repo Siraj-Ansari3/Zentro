@@ -11,6 +11,7 @@ import StoreOnboarding from "../pages/storeSecurity/StoreOnBoarding";
 import PackingQueue from "../pages/warehouse/PackingQueue";
 import DispatchQueue from "../pages/warehouse/DispatchQueue";
 import ReadyToShip from "../pages/warehouse/ReadyToShip";
+import InternalNotesPage from "../pages/communications/InternalNotesPage";
 
 function Placeholder({ title }) {
   return (
@@ -72,7 +73,7 @@ export default function AppRouter() {
       {/* Communications */}
       <Route path="/comms/whatsapp" element={<Placeholder title="WhatsApp Logs" />} />
       <Route path="/comms/conversations" element={<Placeholder title="Customer Conversations" />} />
-      <Route path="/comms/notes" element={<Placeholder title="Internal Notes" />} />
+      <Route path="/comms/notes" element={<InternalNotesPage/>} />
       <Route path="/comms/escalation" element={<Placeholder title="Escalation Timeline" />} />
 
       {/* Analytics */}

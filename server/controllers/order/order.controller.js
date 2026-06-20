@@ -3,6 +3,7 @@ import Store from "../../models/Store.js";
 import Customer from "../../models/Customer.js";
 import axios from "axios";
 import StoreCourierIntegration from "../../models/StoreCourierIntegration.js";
+import InternalNotes from "../../models/InternalNotes.js";
 
 export const createOrder = async (req, res) => {
   try {
@@ -21,6 +22,7 @@ export const createOrder = async (req, res) => {
       deliveryCharges,
       notes,
     } = req.body;
+
 
 
 
@@ -129,16 +131,21 @@ export const createOrder = async (req, res) => {
       verificationStatus,
       status,
 
-      ...(notes?.length && {
-        notes: notes.map((text) => ({
-          text,
-          createdBy: userId,
-        })),
-      }),
     });
 
+    if (notes.length) {
+      await InternalNotes.create({
+        text: notes[0],
+        storeId,
+        orderId: order._id,
+        orderNumber,
+        createdBy: userId,
+      });
+    }
+
+
     // ─────────────────────────────
-    // UPDATE STORE METRICS
+    // UPDATE STORE and CUSTOMERMETRICS
     // ─────────────────────────────
 
     await Customer.findOneAndUpdate(
