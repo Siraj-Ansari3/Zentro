@@ -37,3 +37,33 @@ export const getAllInternalNotes = async (req, res) => {
         })
     }
 }
+
+export const markInternalNoteAsResolved = async (req, res) => {
+
+    try {
+        const { noteId, storeId } = req.body;
+        const note = await InternalNotes.findOne({ _id: noteId, storeId });
+
+        if (!note) {
+            return res.status(404).json({
+                success: false,
+                message: "Internal note not found"
+            });
+        }   
+
+        note.isResolved = true;
+        await note.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Internal note marked as resolved"
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false, 
+            message: "Failed to resolve internal note",
+            error: error.message
+        })
+    }
+}
