@@ -679,7 +679,6 @@ function ActionDropdown({ order, onView, onAssignCourier }) {
 // TABLE ROW
 // ─────────────────────────────────────────────────────────────
 function TableRow({ order, selected, onSelect, onView, onAssignCourier }) {
-
   return (
     <tr onClick={() => onView(order)} className={`border-t border-white/[0.04] cursor-pointer transition-colors group ${selected ? "bg-amber-400/[0.05]" : "hover:bg-white/[0.025]"} ${order.risk === "high" ? "border-l-2 border-l-red-400/40" : ""}`}>
       <td className="pl-4 pr-2 py-3" onClick={e => e.stopPropagation()}>
@@ -708,7 +707,15 @@ function TableRow({ order, selected, onSelect, onView, onAssignCourier }) {
       <td className="px-3 py-3"><RiskBadge level={order.risk} /></td>
       <td className="px-3 py-3">{order.courier ? <span className="text-xs text-slate-300 font-medium">{order.courier}</span> : <span className="text-xs text-slate-600 italic">Unassigned</span>}</td>
       {/* <td className="px-3 py-3"><ShipBadge status={order.shipStatus} /></td> */}
-      <td className="px-3 py-3"><StatusBadge status={order.orderStatus} /></td>
+     <td className="px-3 py-3">
+  <StatusBadge 
+    status={
+      order.orderStatus === "Shipped" &&  (Date.now() - new Date(order.shippedAt).getTime() > 432000000)
+        ? "Order Stuck" 
+        : order.orderStatus
+    } 
+  />
+</td>
       <td className="px-3 py-3" onClick={e => e.stopPropagation()}><ActionDropdown
         order={order}
         onView={onView}
@@ -989,40 +996,42 @@ export default function AllOrders() {
 
         courier: order?.courierId?.name || null,
 
-        shipStatus: (() => {
-          switch (order.status) {
-            case "new":
-              return "Pending";
+        shippedAt: order.shippedAt || null,
 
-            case "verified":
-              return "Verified";
+        // shipStatus: (() => {
+        //   switch (order.status) {
+        //     case "new":
+        //       return "Pending";
 
-            case "packed":
-              return "Packed";
+        //     case "verified":
+        //       return "Verified";
 
-            case "assigned":
-              return "Assigned";
+        //     case "packed":
+        //       return "Packed";
 
-            case "shipped":
-            case "in_transit":
-              return "In Transit";
+        //     case "assigned":
+        //       return "Assigned";
 
-            case "delivered":
-              return "Delivered";
+        //     case "shipped":
+        //     case "in_transit":
+        //       return "In Transit";
 
-            case "failed_delivery":
-              return "Failed";
+        //     case "delivered":
+        //       return "Delivered";
 
-            case "returned":
-              return "Returned";
+        //     case "failed_delivery":
+        //       return "Failed";
 
-            case "cancelled":
-              return "Cancelled";
+        //     case "returned":
+        //       return "Returned";
 
-            default:
-              return "Pending";
-          }
-        })(),
+        //     case "cancelled":
+        //       return "Cancelled";
+
+        //     default:
+        //       return "Pending";
+        //   }
+        // })(),
 
         orderStatus: (() => {
           switch (order.status) {
@@ -1039,6 +1048,8 @@ export default function AllOrders() {
               return "Assigned to Courier";
 
             case "shipped":
+              return "Shipped";
+
             case "in_transit":
               return "Shipped";
 
