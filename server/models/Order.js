@@ -240,6 +240,8 @@ const orderSchema = new mongoose.Schema(
     },
 
     deliveredAt: Date,
+
+    
     shippedAt: Date,
 
     failedReason: {
