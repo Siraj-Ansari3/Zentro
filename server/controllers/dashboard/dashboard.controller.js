@@ -3,7 +3,7 @@ import Store from "../../models/Store.js";
 
 export const getDashboardStats = async (req, res) => {
   try {
-    const storeId = req.query.storeId;
+    const storeId = req.storeId;
     if (!storeId) {
       return res.status(400).json({
         message: "Store ID required",
@@ -11,47 +11,49 @@ export const getDashboardStats = async (req, res) => {
     }
 
     // ─────────────────────────────────
-    // VERIFY USER BELONGS TO STORE
-    // ─────────────────────────────────
-    const membership = await Membership.findOne({
-      userId: req.user.id,
-      storeId,
-      status: "approved",
-    });
-
-    if (!membership) {
-      return res.status(403).json({
-        message: "Unauthorized store access",
-      });
-    }
-
-    // ─────────────────────────────────
     // REAL DATA
     // (placeholder until orders exist)
     // ─────────────────────────────────
-    const dashboardData = {
+const storeData = await Store.findById(storeId, { metrics: 1 });
+
+    // 3. Safety Check: Handle case where store is not found in DB
+    if (!storeData || !storeData.metrics) {
+      return res.status(404).json({
+        success: false,
+        message: "Store dashboard data parameters could not be found.",
+      });
+    }
+
+    // 4. Safe Payload Extraction with Zero-Fallbacks (Destructuring)
+    const {
+      totalRevenue = 0,
+      totalOrders = 0,
+      activeShipments = 0,
+      codSuccessRate = 0,
+      cancelledOrders = 0,
+      returnedOrders = 0,
+      deliveredOrders = 0,
+    } = storeData.metrics;
+
+    // 5. Clean, predictable response structure
+    return res.status(200).json({
+      success: true,
       stats: {
-        totalRevenue: 0,
-        totalOrders: 0,
-        activeCustomers: 0,
-        conversionRate: 0,
+        totalRevenue,
+        totalOrders,
+        activeShipments,
+        codSuccessRate,
+        cancelledOrders,
+        returnedOrders,
+        deliveredOrders,
       },
+    });
 
-      revenueChart: [
-        10, 25, 30, 22, 50, 65,
-        40, 80, 72, 95, 120, 140,
-      ],
+    //   revenueChart,
+    //   topProducts,
+    //   recentActivity
 
-      topProducts: [],
-
-      recentActivity: [],
-
-      store: {
-        id: storeId,
-      },
-    };
-
-    return res.json(dashboardData);
+ 
 
   } catch (err) {
     console.error(err);
