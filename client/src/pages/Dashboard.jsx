@@ -65,7 +65,12 @@ export default function Dashboard() {
   const fetchDashboard = async () => {
     try {
       setLoading(true);
-      const res = await api.get(`/dashboard/stats?storeId=${activeStore.storeId}`);
+      const res = await api.get(`/dashboard/stats`, {
+        params: {
+          storeId: activeStore?.storeId,
+        },
+      });
+
       setDashboardData(res.data);
       console.log("Dashboard data fetched:", res.data);
     } catch (err) {
@@ -97,8 +102,8 @@ export default function Dashboard() {
       color: "amber",
     },
     {
-      label: "Customers",
-      value: dashboardData?.stats?.activeCustomers || 0,
+      label: "Active Shipments",
+      value: dashboardData?.stats?.activeShipments || 0,
       change: "+0%",
       up: true,
       icon: Users,
@@ -113,8 +118,8 @@ export default function Dashboard() {
       color: "sky",
     },
     {
-      label: "Conversion",
-      value: `${dashboardData?.stats?.conversionRate || 0}%`,
+      label: "COD Success Rate",
+      value: `${dashboardData?.stats?.codSuccessRate || 0}%`,
       change: "+0%",
       up: true,
       icon: Activity,
