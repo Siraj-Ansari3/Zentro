@@ -116,7 +116,7 @@ export default function CustomerProfiles() {
       // We pass storeId in params for GET requests, as Axios often drops bodies on GET
       const res = await api.get("/customers", {
         params: {
-          storeId: activeStore.storeId,
+          storeId: activeStore?.storeId,
           search: debouncedSearch,
           riskLevel: riskFilter,
           page,
