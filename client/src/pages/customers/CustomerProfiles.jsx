@@ -13,15 +13,30 @@ import { useStore } from "../../context/StoreContext";
 // BADGES & HELPERS
 // ─────────────────────────────────────────────────────────────
 const riskConfig = {
-  low: { color: "text-emerald-400", bg: "bg-emerald-400/10", border: "border-emerald-400/20", label: "Low Risk" },
-  medium: { color: "text-amber-400", bg: "bg-amber-400/10", border: "border-amber-400/20", label: "Medium Risk" },
-  high: { color: "text-red-400", bg: "bg-red-400/10", border: "border-red-400/20", label: "High Risk" },
+  low: { color: "text-emerald-400", bg: "bg-emerald-400/10", border: "border-emerald-400/20", label: "Low" },
+  medium: { color: "text-amber-400", bg: "bg-amber-400/10", border: "border-amber-400/20", label: "Medium" },
+  high: { color: "text-red-400", bg: "bg-red-400/10", border: "border-red-400/20", label: "High" },
 };
 
-function RiskBadge({ level }) {
-  const config = riskConfig[level] || riskConfig.low;
+// Helper function to resolve the tier based on your thresholds
+const getRiskLevel = (score) => {
+  if (score > 70) return "high";
+  if (score > 30) return "medium";
+  return "low"; // Catches <= 30 as well as fallbacks
+};
+
+function RiskBadge({ riskScore = 0 }) {
+  // 1. Determine the level string ("low", "medium", "high") based on the numerical score
+  const level = getRiskLevel(riskScore);
+  
+  // 2. Look up the configuration style classes
+  const config = riskConfig[level];
+
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${config.bg} ${config.color} ${config.border}`}>
+    <span 
+      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${config.bg} ${config.color} ${config.border}`}
+      title={`Risk Score: ${riskScore}`} // Optional: shows the exact score on hover
+    >
       <Shield size={10} /> {config.label}
     </span>
   );
@@ -279,7 +294,7 @@ export default function CustomerProfiles() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <RiskBadge level={c.riskLevel} />
+                        <RiskBadge riskScore={c.riskScore} />
                         {c.isBlacklisted && (
                           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-500 border border-red-500/20">
                             BLACKLISTED
