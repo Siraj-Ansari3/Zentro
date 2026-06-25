@@ -1032,7 +1032,7 @@ export default function ReturnsPage() {
       description: `Approve ${TYPE_CONFIG[req.type]?.label || req.type} request ${req.requestId || req._id}?`,
       confirmLabel: "Approve",
       danger: false,
-      onConfirm: () => runAction(() => api.patch(`/returns/${req._id}/approve`, { storeId })),
+      onConfirm: () => runAction(() => api.patch(`/requests/returns/updateStatus`, { storeId, requestId: req._id, status: "APPROVED" })),
     });
   };
 
@@ -1043,7 +1043,7 @@ export default function ReturnsPage() {
       description: `Reject this request? This action cannot be undone.`,
       confirmLabel: "Reject",
       danger: true,
-      onConfirm: () => runAction(() => api.patch(`/returns/${req._id}/reject`, { storeId })),
+      onConfirm: () => runAction(() => api.patch(`/requests/returns/updateStatus`, { storeId, requestId: req._id, status: "REJECTED" })),
     });
   };
 
@@ -1054,7 +1054,7 @@ export default function ReturnsPage() {
       description: `Close request ${req.requestId || req._id}? This marks it as resolved.`,
       confirmLabel: "Close",
       danger: true,
-      onConfirm: () => runAction(() => api.patch(`/returns/${req._id}/close`, { storeId })),
+      onConfirm: () => runAction(() => api.patch(`/requests/returns/updateStatus`, { storeId, requestId: req._id, status:"CLOSED" })),
     });
   };
 
@@ -1120,6 +1120,19 @@ export default function ReturnsPage() {
           />
         ))}
       </div>
+
+
+//--------- develope these features----------------
+      <div>
+        <button>refunds pending</button>
+        <button>refunds paid</button>
+      </div>
+
+      <div>
+        <button>Exchanges Dispactched</button>
+        <button>Exchanges Delivered</button>
+      </div>
+//-------------------------------------------------
 
       {/* ── Search + Status Filter ── */}
       <div className="flex flex-col sm:flex-row gap-2 mb-4">
