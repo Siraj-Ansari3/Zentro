@@ -624,7 +624,6 @@ export const getUnassignedOrders = async (req, res) => {
 };
 
 
-
 export const getReadyToShipOrders = async (req, res) => {
   try {
     // Securely provided by your requireStoreAccess middleware
@@ -694,3 +693,25 @@ export const getReadyToShipOrders = async (req, res) => {
     });
   }
 };
+
+export const getOrder = async (req, res) => {
+
+  try {
+
+    const storeId = req.storeId;
+
+    const { search } = req.query;
+
+    const order = await Order.findOne({ storeId, orderNumber: search })
+
+    return res.status(200).json({
+      order: order
+    })
+
+  } catch (error) {
+    console.log("failed to get order")
+    return res.status(500).json({
+      error: error.message
+    })
+  }
+}

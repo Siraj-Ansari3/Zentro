@@ -436,12 +436,12 @@ function ReturnDetailsDrawer({ request, storeId, onClose, onStatusChange }) {
                   <Row label="Reason"><span className="text-xs text-slate-300">{data?.reason || "—"}</span></Row>
                   <Row label="Refund Amount">
                     <span className="text-xs font-semibold text-white">
-                      {data?.refundAmount ? `Rs ${data.refundAmount.toLocaleString()}` : "—"}
+                      {data?.refundAmount ? `Rs ${data?.refundAmount.toLocaleString()}` : "—"}
                     </span>
                   </Row>
                   <Row label="Inspection"><span className="text-xs text-slate-300">{data?.inspectionResult || "—"}</span></Row>
-                  <Row label="Assigned To"><span className="text-xs text-slate-300">{data?.assignedTo?.name || "Unassigned"}</span></Row>
-                  <Row label="Created By"><span className="text-xs text-slate-300">{data?.createdBy?.name || "—"}</span></Row>
+                  <Row label="Assigned To"><span className="text-xs text-slate-300">{data?.assignedTo?.displayName || "Unassigned"}</span></Row>
+                  <Row label="Created By"><span className="text-xs text-slate-300">{data?.createdBy?.displayName || "—"}</span></Row>
                 </div>
               </section>
 
@@ -470,7 +470,7 @@ function ReturnDetailsDrawer({ request, storeId, onClose, onStatusChange }) {
                     </Row>
                     <Row label="Order Total">
                       <span className="text-xs font-semibold text-white">
-                        {data.orderId?.totalAmount ? `Rs ${data.orderId.totalAmount.toLocaleString()}` : "—"}
+                        {data.orderId?.totalAmount ? `Rs ${data.orderId?.totalAmount.toLocaleString()}` : "—"}
                       </span>
                     </Row>
                   </div>
@@ -624,10 +624,10 @@ function CreateReturnModal({ onClose, onCreated, storeId }) {
     lookupTimeout.current = setTimeout(async () => {
       setOrderLookup({ loading: true, data: null, error: "" });
       try {
-        const res = await api.get("/order/get_all_orders", {
-          params: { storeId, search: num, limit: 1 },
+        const res = await api.get("/order/get_order", {
+          params: { storeId, search: num,  },
         });
-        const found = res.data?.orders?.[0] || null;
+        const found = res.data?.order || null;
         setOrderLookup({
           loading: false,
           data: found,
@@ -665,7 +665,7 @@ function CreateReturnModal({ onClose, onCreated, storeId }) {
         type:       form.type,
         reason:     form.reason,
       };
-      if (form.type === "REFUND" && form.refundAmount)
+      if (form.type === "RETURN" && form.refundAmount)
         body.refundAmount = Number(form.refundAmount);
       if (form.type === "EXCHANGE" && form.exchangeProductName)
         body.exchangeProductName = form.exchangeProductName; // backend maps to exchangeProductId if needed
@@ -979,6 +979,7 @@ export default function ReturnsPage() {
       if (search.trim())          params.search = search.trim();
 
       const res = await api.get("/requests/returns", { params });
+      console.log(res.data?.requests)
       setRequests(res.data?.requests || []);
       setTotal(res.data?.total ?? 0);
     } catch (err) {
@@ -1269,7 +1270,7 @@ export default function ReturnsPage() {
                     {/* Customer */}
                     <td className="px-3 py-3">
                       <p className="text-xs font-semibold text-slate-200 truncate max-w-[120px]">
-                        {req.customerId?.name || req.orderId?.shippingAddress?.fullName || "—"}
+                        { req.customerId?.fullName || req.orderId?.shippingAddress?.fullName || "—"}
                       </p>
                       <p className="text-[10px] text-slate-500 truncate max-w-[120px]">
                         {req.orderId?.shippingAddress?.phone || ""}
