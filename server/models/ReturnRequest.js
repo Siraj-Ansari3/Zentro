@@ -1,7 +1,16 @@
+import mongoose from "mongoose";
+
 const returnRequestSchema = new mongoose.Schema({
-  orderId: {
+  
+    orderId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Order",
+    required: true
+  },
+
+  storeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Store",
     required: true
   },
 
@@ -73,3 +82,6 @@ const returnRequestSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+
+export default mongoose.model("ReturnRequest", returnRequestSchema);

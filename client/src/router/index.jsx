@@ -12,6 +12,7 @@ import PackingQueue from "../pages/warehouse/PackingQueue";
 import DispatchQueue from "../pages/warehouse/DispatchQueue";
 import ReadyToShip from "../pages/warehouse/ReadyToShip";
 import InternalNotesPage from "../pages/communications/InternalNotesPage";
+import ReturnsPage from "../pages/Orders/ReturnsPage";
 
 function Placeholder({ title }) {
   return (
@@ -40,7 +41,7 @@ export default function AppRouter() {
       <Route path="/orders/packed" element={<Placeholder title="Packed Orders" />} />
       <Route path="/orders/shipped" element={<Placeholder title="Shipped Orders" />} />
       <Route path="/orders/failed" element={<Placeholder title="Failed Deliveries" />} />
-      <Route path="/orders/returns" element={<Placeholder title="Returns & Exchanges" />} />
+      <Route path="/orders/returns" element={<ReturnsPage />} />
 
       {/* Customers */}
       <Route path="/customers/profiles" element={<Customers />} />

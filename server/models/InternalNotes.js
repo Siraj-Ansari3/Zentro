@@ -34,7 +34,7 @@ const InternalNoteSchema = new mongoose.Schema(
 
         category: {
             type: String,
-            enum: ["delivery_issue", "customer_complaint", "payment", "general"],
+            enum: ["delivery_issue", "customer_complaint", "payment", "return", "general"],
             default: "general"
         },
         
