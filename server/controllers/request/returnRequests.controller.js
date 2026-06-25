@@ -95,17 +95,22 @@ export const updateReturnRequestStatus = async (req, res) => {
             });
         }
 
-        if (status === "APPROVED") {
-            await Customer.findOneAndUpdate({ _id: customerId, storeId },
-                {
-                    $inc: { "metrics.returnedOrders": 1 }
-                })
+       if (status === "APPROVED") {
+            const targetCustomerId = updatedRequest.customerId;
 
-            await Store.findOneAndUpdate({ _id: storeId },
-                {
-                    $inc: { "metrics.returnedOrders": 1 }
-                })
-
+            if (targetCustomerId) {
+                // Fire both independent updates at the exact same time
+                await Promise.all([
+                    Customer.findOneAndUpdate(
+                        { _id: targetCustomerId, storeId },
+                        { $inc: { "metrics.returnedOrders": 1 } }
+                    ),
+                    Store.findOneAndUpdate(
+                        { _id: storeId },
+                        { $inc: { "metrics.returnedOrders": 1 } }
+                    )
+                ]);
+            }
         }
 
 
