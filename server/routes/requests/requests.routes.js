@@ -3,6 +3,7 @@ import { requireStoreAccess } from "../../middlewares/requireStoreAccess.js";
 import { approveJoinRequest, getJoinRequests } from "../../controllers/request/joinRequests.controller.js";
 import { verifyAuth } from "../../middlewares/verifyAuth.js";
 import { attachUser } from "../../middlewares/attachUser.js";
+import { createReturnRequest, fetchReturnRequests } from "../../controllers/request/returnRequests.controller.js";
 
 
 const router = express.Router();
@@ -34,7 +35,20 @@ router.post(
 //     rejectJoinRequest
 // );
 
+// creates return and echange requests
+router.post("/returns",
+    verifyAuth,
+    attachUser,
+    requireStoreAccess("super_admin", "admin", "manager", "editor"),
+    createReturnRequest
+)
 
-
+// fetches return and exchange requests
+router.get("/returns",
+    verifyAuth,
+    attachUser,
+    requireStoreAccess("super_admin", "admin", "manager"),
+    fetchReturnRequests
+)
 
 export default router;

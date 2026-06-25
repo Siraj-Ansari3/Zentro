@@ -672,7 +672,7 @@ function CreateReturnModal({ onClose, onCreated, storeId }) {
       if (form.notes.trim())
         body.initialNote = form.notes.trim();
 
-      await api.post("/returns", body);
+      await api.post("/requests/returns", body);
       setSuccess(true);
       setTimeout(() => { onCreated(); onClose(); }, 1000);
     } catch (err) {
@@ -978,7 +978,7 @@ export default function ReturnsPage() {
       if (statusFilter !== "all") params.status = statusFilter;
       if (search.trim())          params.search = search.trim();
 
-      const res = await api.get("/returns", { params });
+      const res = await api.get("/requests/returns", { params });
       setRequests(res.data?.requests || []);
       setTotal(res.data?.total ?? 0);
     } catch (err) {
