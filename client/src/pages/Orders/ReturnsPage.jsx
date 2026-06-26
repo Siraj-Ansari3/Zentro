@@ -6,6 +6,9 @@ import {
   Package, Tag, CreditCard, ClipboardList, StickyNote, Send,
   Plus, Trash2, PackagePlus, FileText,
 } from "lucide-react";
+import StatusBadge, {STATUS_CONFIG} from "../../components/Badges/StatusBadge";
+import ReturnTypeBadge, { TYPE_CONFIG }  from "../../components/Badges/ReturnTypeBadge";
+import FilterPill from "../../components/Filters/FilterPill";
 import api from "../../api/axios";         // adjust path as needed
 import { useStore } from "../../context/StoreContext"; // adjust path as needed
 
@@ -14,33 +17,7 @@ import { useStore } from "../../context/StoreContext"; // adjust path as needed
 // ─────────────────────────────────────────────────────────────
 const REQUEST_TYPES = ["RETURN", "EXCHANGE"];
 
-const TYPE_CONFIG = {
-  RETURN: {
-    label: "Return",
-    cls: "bg-blue-400/10 text-blue-400 border-blue-400/20",
-    icon: RefreshCw,
-  },
-  EXCHANGE: {
-    label: "Exchange",
-    cls: "bg-violet-400/10 text-violet-400 border-violet-400/20",
-    icon: ArrowLeftRight,
-  },
-};
 
-const STATUS_CONFIG = {
-  REQUESTED:           { label: "Requested",          cls: "bg-slate-400/10 text-slate-400 border-slate-400/20" },
-  UNDER_REVIEW:        { label: "Under Review",       cls: "bg-yellow-400/10 text-yellow-400 border-yellow-400/20" },
-  APPROVED:            { label: "Approved",           cls: "bg-emerald-400/10 text-emerald-400 border-emerald-400/20" },
-  REJECTED:            { label: "Rejected",           cls: "bg-red-400/10 text-red-400 border-red-400/20" },
-  PICKUP_SCHEDULED:    { label: "Pickup Scheduled",   cls: "bg-cyan-400/10 text-cyan-400 border-cyan-400/20" },
-  IN_TRANSIT:          { label: "In Transit",         cls: "bg-blue-400/10 text-blue-400 border-blue-400/20" },
-  RECEIVED:            { label: "Received",           cls: "bg-teal-400/10 text-teal-400 border-teal-400/20" },
-  INSPECTION_PENDING:  { label: "Inspection Pending", cls: "bg-amber-400/10 text-amber-400 border-amber-400/20" },
-  INSPECTION_PASSED:   { label: "Inspection Passed",  cls: "bg-emerald-400/10 text-emerald-400 border-emerald-400/20" },
-  INSPECTION_FAILED:   { label: "Inspection Failed",  cls: "bg-red-400/10 text-red-400 border-red-400/20" },
-  EXCHANGE_DISPATCHED: { label: "Exchange Dispatched",cls: "bg-violet-400/10 text-violet-400 border-violet-400/20" },
-  CLOSED:              { label: "Closed",             cls: "bg-slate-400/10 text-slate-500 border-slate-400/10" },
-};
 
 const ALL_STATUSES = Object.keys(STATUS_CONFIG);
 
@@ -59,38 +36,6 @@ function fmtDate(d) {
   return new Date(d).toLocaleDateString("en-PK", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-function TypeBadge({ type }) {
-  const cfg = TYPE_CONFIG[type] || { label: type, cls: "bg-slate-400/10 text-slate-400 border-slate-400/20" };
-  const Icon = cfg.icon || RefreshCw;
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border whitespace-nowrap ${cfg.cls}`}>
-      <Icon size={9} />
-      {cfg.label}
-    </span>
-  );
-}
-
-function StatusBadge({ status }) {
-  const cfg = STATUS_CONFIG[status] || { label: status, cls: "bg-slate-400/10 text-slate-400 border-slate-400/20" };
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border whitespace-nowrap ${cfg.cls}`}>
-      {cfg.label}
-    </span>
-  );
-}
-
-function Pill({ label, active, onClick, activeCls }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border flex-shrink-0 ${
-        active ? activeCls : "border-transparent text-slate-500 hover:text-slate-300 hover:bg-white/[0.04]"
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
 
 // ─────────────────────────────────────────────────────────────
 // STAT CARDS
@@ -385,7 +330,7 @@ function ReturnDetailsDrawer({ request, storeId, onClose, onStatusChange }) {
           <div>
             <div className="flex items-center gap-2 mb-0.5">
               <span className="text-sm font-bold text-white font-mono">{data?.requestId || data?._id}</span>
-              <TypeBadge type={data?.type} />
+              <ReturnTypeBadge type={data?.type} />
             </div>
             <div className="flex items-center gap-2">
               <StatusBadge status={data?.status} />
@@ -1111,7 +1056,7 @@ export default function ReturnsPage() {
       {/* ── Type Filter Tabs ── */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 mb-3">
         {typeOptions.map((t) => (
-          <Pill
+          <FilterPill
             key={t.key}
             label={t.label}
             active={typeFilter === t.key}
@@ -1122,7 +1067,7 @@ export default function ReturnsPage() {
       </div>
 
 
-//--------- develope these features----------------
+{/* --------- develope these features---------------- */}
       <div>
         <button>refunds pending</button>
         <button>refunds paid</button>
@@ -1132,7 +1077,7 @@ export default function ReturnsPage() {
         <button>Exchanges Dispactched</button>
         <button>Exchanges Delivered</button>
       </div>
-//-------------------------------------------------
+{/* ------------------------------------------------- */}
 
       {/* ── Search + Status Filter ── */}
       <div className="flex flex-col sm:flex-row gap-2 mb-4">
@@ -1275,7 +1220,7 @@ export default function ReturnsPage() {
                     </td>
 
                     {/* Type */}
-                    <td className="px-3 py-3"><TypeBadge type={req.type} /></td>
+                    <td className="px-3 py-3"><ReturnTypeBadge type={req.type} /></td>
 
                     {/* Status */}
                     <td className="px-3 py-3"><StatusBadge status={req.status} /></td>
