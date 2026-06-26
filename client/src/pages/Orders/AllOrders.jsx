@@ -6,6 +6,9 @@ import {
   Phone, Mail, MapPin, TrendingDown, MessageSquare, StickyNote, BadgeAlert,
   PackagePlus, Loader2, CheckCircle2,
 } from "lucide-react";
+import StatusBadge from "../../components/Badges/StatusBadge";
+import { PayBadge } from "../../components/Badges/PayBadge";
+import { RiskBadge } from "../../components/Badges/RiskBadge";
 import api from "../../api/axios"; // adjust path as needed
 import { useStore } from "../../context/StoreContext";
 
@@ -30,28 +33,12 @@ const STATUS_TABS = [
 // ─────────────────────────────────────────────────────────────
 // SMALL BADGES
 // ─────────────────────────────────────────────────────────────
-function RiskBadge({ level }) {
-  const m = { low: { cls: "bg-emerald-400/10 text-emerald-400 border-emerald-400/20", icon: <TrendingDown size={10} />, label: "Low" }, medium: { cls: "bg-amber-400/10 text-amber-400 border-amber-400/20", icon: <BadgeAlert size={10} />, label: "Med" }, high: { cls: "bg-red-400/10 text-red-400 border-red-400/20", icon: <AlertTriangle size={10} />, label: "High" } };
-  const r = m[level] || m.low;
-  return <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold border ${r.cls}`}>{r.icon}{r.label}</span>;
-}
-
-function StatusBadge({ status }) {
-  const m = { "Pending Verification": "bg-yellow-400/10 text-yellow-400 border-yellow-400/20", "Packed": "bg-indigo-400/10 text-indigo-400 border-indigo-400/20", "Shipped": "bg-blue-400/10 text-blue-400 border-blue-400/20", "Delivered": "bg-emerald-400/10 text-emerald-400 border-emerald-400/20", "Failed Delivery": "bg-red-400/10 text-red-400 border-red-400/20", "Returned": "bg-orange-400/10 text-orange-400 border-orange-400/20" };
-  return <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border whitespace-nowrap ${m[status] || "bg-slate-400/10 text-slate-400 border-slate-400/20"}`}>{status}</span>;
-}
-
 function ShipBadge({ status }) {
-  const m = { "Pending": "text-slate-400 bg-slate-400/10 border-slate-400/20", "Picked Up": "text-blue-400 bg-blue-400/10 border-blue-400/20", "In Transit": "text-cyan-400 bg-cyan-400/10 border-cyan-400/20", "Out for Delivery": "text-violet-400 bg-violet-400/10 border-violet-400/20", "Delivered": "text-emerald-400 bg-emerald-400/10 border-emerald-400/20", "Failed": "text-red-400 bg-red-400/10 border-red-400/20", "Returned": "text-orange-400 bg-orange-400/10 border-orange-400/20" };
-  const dot = { "Pending": "bg-slate-400", "Picked Up": "bg-blue-400", "In Transit": "bg-cyan-400", "Out for Delivery": "bg-violet-400", "Delivered": "bg-emerald-400", "Failed": "bg-red-400", "Returned": "bg-orange-400" };
+  const m = { "Pending": "text-slate-400 bg-slate-400/10 border-slate-400/20", "Picked Up": "text-blue-400 bg-blue-400/10 border-blue-400/20", "In Transit": "text-cyan-400 bg-cyan-400/10 border-cyan-400/20", "Out for Delivery": "text-violet-400 bg-violet-400/10 border-violet-400/20", "Delivered": "text-emerald-400 bg-emerald-400/10 border-emerald-400/20", "Failed": "text-red-400 bg-red-400/10 border-red-400/20", "Returned": "text-orange-400 bg-orange-400/10 border-orange-400/20", "Order Stuck": "text-amber-400 bg-amber-400/10 border-amber-400/20" };
+  const dot = { "Pending": "bg-slate-400", "Picked Up": "bg-blue-400", "In Transit": "bg-cyan-400", "Out for Delivery": "bg-violet-400", "Delivered": "bg-emerald-400", "Failed": "bg-red-400", "Returned": "bg-orange-400", "Order Stuck": "bg-amber-400" };
   return <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold border whitespace-nowrap ${m[status] || "text-slate-400 bg-slate-400/10 border-slate-400/20"}`}><span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dot[status] || "bg-slate-400"} ${status === "In Transit" || status === "Out for Delivery" ? "animate-pulse" : ""}`} />{status}</span>;
 }
 
-function PayBadge({ type }) {
-  return type === "COD"
-    ? <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold border bg-amber-400/10 text-amber-400 border-amber-400/20">COD</span>
-    : <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold border bg-emerald-400/10 text-emerald-400 border-emerald-400/20">PREPAID</span>;
-}
 
 // ─────────────────────────────────────────────────────────────
 // CREATE ORDER MODAL
@@ -227,7 +214,7 @@ function CreateOrderModal({ onClose, onCreated }) {
                 </FormField> */}
                 <FormField label="Full Name" required error={errors.customerName}>
                   <Input
-                    placeholder="e.g. Aisha Malik"
+                    placeholder="e.g. Siraj Ansari"
                     value={form.customerName}
                     onChange={e => set("customerName", e.target.value)}
                   />
