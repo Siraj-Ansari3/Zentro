@@ -23,6 +23,7 @@ export const attachUser = async (req, res, next) => {
 
     next();
   } catch (err) {
+    console.error("Error attaching user:", err);
     return res.status(500).json({ message: "User attach failed" });
   }
 };
