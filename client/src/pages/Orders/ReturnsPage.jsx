@@ -924,9 +924,9 @@ export default function ReturnsPage() {
       if (search.trim())          params.search = search.trim();
 
       const res = await api.get("/requests/returns", { params });
-      console.log(res.data?.requests)
+      console.log(res.data)
       setRequests(res.data?.requests || []);
-      setTotal(res.data?.total ?? 0);
+      setTotal(res.data?.pagination?.total ?? 0);
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to load requests");
     } finally {

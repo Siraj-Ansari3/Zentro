@@ -39,6 +39,7 @@ export const requireStoreAccess = (...allowedRoles) => {
       }
       next();
     } catch (err) {
+      console.error("Error checking store access:", err);
       return res.status(500).json({ message: "Store access check failed" });
     }
   };
