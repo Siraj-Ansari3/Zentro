@@ -10,8 +10,7 @@ import {
   ChevronDown
 } from "lucide-react";
 
-// NOTE: Adjust these import paths to match your project's structure
-import api from "../../api/axios"; // adjust path as needed
+import api from "../../api/axios"; 
 import { useStore } from "../../context/StoreContext";
 
 const CITIES = ["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta"];

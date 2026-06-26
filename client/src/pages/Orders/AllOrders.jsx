@@ -7,19 +7,18 @@ import {
   PackagePlus, Loader2, CheckCircle2,
 } from "lucide-react";
 import StatusBadge from "../../components/Badges/StatusBadge";
-import { PayBadge } from "../../components/Badges/PayBadge";
-import { RiskBadge } from "../../components/Badges/RiskBadge";
+import PayBadge  from "../../components/Badges/PayBadge";
+import RiskBadge  from "../../components/Badges/RiskBadge";
 import CreateOrderModal from "../../components/modals/CreateOrderModal";
-import api from "../../api/axios"; // adjust path as needed
+import OrderDrawer from "../../components/modals/OrderDrawerModal";
+import AssignCourierModal from "../../components/modals/AssignCourierModal";
+import api from "../../api/axios"; 
 import { useStore } from "../../context/StoreContext";
 
 // ─────────────────────────────────────────────────────────────
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────
 const COURIERS = ["Leopards", "TCS", "Trax", "M&P", "PostEx"];
-// const CITIES = ["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Peshawar", "Quetta", "Multan"];
-
-
 
 const STATUS_TABS = [
   { key: "all", label: "All", color: "slate" },
@@ -30,15 +29,6 @@ const STATUS_TABS = [
   { key: "Failed Delivery", label: "Failed Deliveries", color: "red" },
   { key: "Returned", label: "Returns", color: "orange" },
 ];
-
-// ─────────────────────────────────────────────────────────────
-// SMALL BADGES
-// ─────────────────────────────────────────────────────────────
-function ShipBadge({ status }) {
-  const m = { "Pending": "text-slate-400 bg-slate-400/10 border-slate-400/20", "Picked Up": "text-blue-400 bg-blue-400/10 border-blue-400/20", "In Transit": "text-cyan-400 bg-cyan-400/10 border-cyan-400/20", "Out for Delivery": "text-violet-400 bg-violet-400/10 border-violet-400/20", "Delivered": "text-emerald-400 bg-emerald-400/10 border-emerald-400/20", "Failed": "text-red-400 bg-red-400/10 border-red-400/20", "Returned": "text-orange-400 bg-orange-400/10 border-orange-400/20", "Order Stuck": "text-amber-400 bg-amber-400/10 border-amber-400/20" };
-  const dot = { "Pending": "bg-slate-400", "Picked Up": "bg-blue-400", "In Transit": "bg-cyan-400", "Out for Delivery": "bg-violet-400", "Delivered": "bg-emerald-400", "Failed": "bg-red-400", "Returned": "bg-orange-400", "Order Stuck": "bg-amber-400" };
-  return <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold border whitespace-nowrap ${m[status] || "text-slate-400 bg-slate-400/10 border-slate-400/20"}`}><span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dot[status] || "bg-slate-400"} ${status === "In Transit" || status === "Out for Delivery" ? "animate-pulse" : ""}`} />{status}</span>;
-}
 
 
 // ─────────────────────────────────────────────────────────────
@@ -408,220 +398,221 @@ function ShipBadge({ status }) {
 // ─────────────────────────────────────────────────────────────
 // ORDER DRAWER (detail panel)
 // ─────────────────────────────────────────────────────────────
-const TIMELINE = [
-  { event: "Order Placed", time: "Jan 22, 10:14 AM", done: true },
-  { event: "Payment Confirmed", time: "Jan 22, 10:15 AM", done: true },
-  { event: "Picked Up by Courier", time: "Jan 22, 02:30 PM", done: true },
-  { event: "In Transit", time: "Jan 23, 09:00 AM", done: true },
-  { event: "Out for Delivery", time: "Jan 24, 08:45 AM", done: true },
-  { event: "Delivered", time: "Pending", done: false },
-];
 
-function OrderDrawer({ order, onClose, onUpdateStatus, onAssignCourier }) {
-  const [loading, setLoading] = useState(false);
+// const TIMELINE = [
+//   { event: "Order Placed", time: "Jan 22, 10:14 AM", done: true },
+//   { event: "Payment Confirmed", time: "Jan 22, 10:15 AM", done: true },
+//   { event: "Picked Up by Courier", time: "Jan 22, 02:30 PM", done: true },
+//   { event: "In Transit", time: "Jan 23, 09:00 AM", done: true },
+//   { event: "Out for Delivery", time: "Jan 24, 08:45 AM", done: true },
+//   { event: "Delivered", time: "Pending", done: false },
+// ];
 
-  if (!order) return null;
+// function OrderDrawer({ order, onClose, onUpdateStatus, onAssignCourier }) {
+//   const [loading, setLoading] = useState(false);
+
+//   if (!order) return null;
 
 
-  // ─────────────────────────────────────────────────────────────
-  // DYNAMIC ACTION RENDERER
-  // ─────────────────────────────────────────────────────────────
-  const renderActions = () => {
+//   // ─────────────────────────────────────────────────────────────
+//   // DYNAMIC ACTION RENDERER
+//   // ─────────────────────────────────────────────────────────────
+//   const renderActions = () => {
 
-    switch (order.orderStatus) {
-      case "New":
-        return (
-          <>
-            <button
-              onClick={async () => {
-                setLoading(true);
-                await onUpdateStatus(order.orderNumber, "verified");
-                setLoading(false);
-              }}
-              disabled={loading}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-400 text-black text-xs font-bold hover:bg-emerald-300 disabled:opacity-50 transition-colors shadow-lg shadow-emerald-400/20"
-            >
-              {loading ? <Loader2 size={13} className="animate-spin" /> : <UserCheck size={13} />}
-              mark as verified
-            </button>
-            <button
-              onClick={async () => {
-                if (confirm("Are you sure you want to cancel this order?")) {
-                  setLoading(true);
-                  await onUpdateStatus(order.orderNumber, "failed_delivery", "Manually Canceled");
-                  setLoading(false);
-                }
-              }}
-              disabled={loading}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-red-400 text-xs font-semibold hover:bg-red-400/10 hover:border-red-500/20 transition-colors"
-            >
-              Cancel Order
-            </button>
-          </>
-        );
+//     switch (order.orderStatus) {
+//       case "New":
+//         return (
+//           <>
+//             <button
+//               onClick={async () => {
+//                 setLoading(true);
+//                 await onUpdateStatus(order.orderNumber, "verified");
+//                 setLoading(false);
+//               }}
+//               disabled={loading}
+//               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-400 text-black text-xs font-bold hover:bg-emerald-300 disabled:opacity-50 transition-colors shadow-lg shadow-emerald-400/20"
+//             >
+//               {loading ? <Loader2 size={13} className="animate-spin" /> : <UserCheck size={13} />}
+//               mark as verified
+//             </button>
+//             <button
+//               onClick={async () => {
+//                 if (confirm("Are you sure you want to cancel this order?")) {
+//                   setLoading(true);
+//                   await onUpdateStatus(order.orderNumber, "failed_delivery", "Manually Canceled");
+//                   setLoading(false);
+//                 }
+//               }}
+//               disabled={loading}
+//               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-red-400 text-xs font-semibold hover:bg-red-400/10 hover:border-red-500/20 transition-colors"
+//             >
+//               Cancel Order
+//             </button>
+//           </>
+//         );
 
-      case "Verified":
-        return (
-          <>
-            <button
-              onClick={() => {
-                onClose(); // Close drawer to focus on the courier modal
-                onAssignCourier(order);
-              }}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-amber-400 text-black text-xs font-bold hover:bg-amber-300 transition-colors shadow-lg shadow-amber-400/20"
-            >
-              <Truck size={13} />
-              assign courier
-            </button>
-            {/* <button
-              onClick={async () => {
-                setLoading(true);
-                await onUpdateStatus(order.orderNumber, "pending_verification");
-                setLoading(false);
-              }}
-              disabled={loading}
-              className="px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-slate-400 text-xs font-medium hover:bg-white/[0.08] transition-colors"
-              title="Move back to Pending"
-            >
-              <RefreshCcw size={13} />
-            </button> */}
-          </>
-        );
+//       case "Verified":
+//         return (
+//           <>
+//             <button
+//               onClick={() => {
+//                 onClose(); // Close drawer to focus on the courier modal
+//                 onAssignCourier(order);
+//               }}
+//               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-amber-400 text-black text-xs font-bold hover:bg-amber-300 transition-colors shadow-lg shadow-amber-400/20"
+//             >
+//               <Truck size={13} />
+//               assign courier
+//             </button>
+//             {/* <button
+//               onClick={async () => {
+//                 setLoading(true);
+//                 await onUpdateStatus(order.orderNumber, "pending_verification");
+//                 setLoading(false);
+//               }}
+//               disabled={loading}
+//               className="px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-slate-400 text-xs font-medium hover:bg-white/[0.08] transition-colors"
+//               title="Move back to Pending"
+//             >
+//               <RefreshCcw size={13} />
+//             </button> */}
+//           </>
+//         );
 
-      case "Assigned to Courier":
-        return (
-          <>
-            <a
-              href={order.raw.trackingUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-500 text-white text-xs font-bold hover:bg-blue-600 transition-colors"
-            >
-              <Printer size={13} />
-              Track Portal
-            </a>
-            <button
-              onClick={async () => {
-                setLoading(true);
-                await onUpdateStatus(order.orderNumber, "delivered", "Force Marked Delivered");
-                setLoading(false);
-              }}
-              disabled={loading}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-emerald-400 text-xs font-semibold hover:bg-emerald-400/10 transition-colors"
-            >
-              Force Mark Delivered
-            </button>
-          </>
-        );
+//       case "Assigned to Courier":
+//         return (
+//           <>
+//             <a
+//               href={order.raw.trackingUrl}
+//               target="_blank"
+//               rel="noreferrer"
+//               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-blue-500 text-white text-xs font-bold hover:bg-blue-600 transition-colors"
+//             >
+//               <Printer size={13} />
+//               Track Portal
+//             </a>
+//             <button
+//               onClick={async () => {
+//                 setLoading(true);
+//                 await onUpdateStatus(order.orderNumber, "delivered", "Force Marked Delivered");
+//                 setLoading(false);
+//               }}
+//               disabled={loading}
+//               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-emerald-400 text-xs font-semibold hover:bg-emerald-400/10 transition-colors"
+//             >
+//               Force Mark Delivered
+//             </button>
+//           </>
+//         );
 
-      case "Shipped":
-        return (
-          <>
-            <div className="flex-1 flex items-center justify-center text-center p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium flex items-center justify-center gap-2">
-              <Loader2 size={14} className="animate-spin" /> This order is currently in transit.
-            </div>
+//       case "Shipped":
+//         return (
+//           <>
+//             <div className="flex-1 flex items-center justify-center text-center p-2 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium flex items-center justify-center gap-2">
+//               <Loader2 size={14} className="animate-spin" /> This order is currently in transit.
+//             </div>
 
-            {/* <button
-              onClick={async () => {
-                if (confirm("Are you sure you want to cancel this order?")) {
-                  setLoading(true);
-                  await onUpdateStatus(order.orderNumber, "failed_delivery", "manually cancelled while in transit");
-                  setLoading(false);
-                }
-              }}
-              disabled={loading}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-red-400 text-xs font-semibold hover:bg-red-400/10 hover:border-red-500/20 transition-colors"
-            >
-              Cancel Order
-            </button> */}
+//             {/* <button
+//               onClick={async () => {
+//                 if (confirm("Are you sure you want to cancel this order?")) {
+//                   setLoading(true);
+//                   await onUpdateStatus(order.orderNumber, "failed_delivery", "manually cancelled while in transit");
+//                   setLoading(false);
+//                 }
+//               }}
+//               disabled={loading}
+//               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-red-400 text-xs font-semibold hover:bg-red-400/10 hover:border-red-500/20 transition-colors"
+//             >
+//               Cancel Order
+//             </button> */}
 
-          </>
-        );
+//           </>
+//         );
 
-      case "Delivered":
-        return (
-          <div className="w-full text-center p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium flex items-center justify-center gap-2">
-            <CheckCircle2 size={14} /> This order has been successfully delivered.
-          </div>
-        );
+//       case "Delivered":
+//         return (
+//           <div className="w-full text-center p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium flex items-center justify-center gap-2">
+//             <CheckCircle2 size={14} /> This order has been successfully delivered.
+//           </div>
+//         );
 
-      default:
-        return (
-          <div className="w-full text-center p-2 rounded-xl bg-white/[0.02] border border-white/[0.06] text-slate-500 text-xs italic">
-            No pipeline actions available for status: {order.orderStatus}
-          </div>
-        );
-    }
-  };
+//       default:
+//         return (
+//           <div className="w-full text-center p-2 rounded-xl bg-white/[0.02] border border-white/[0.06] text-slate-500 text-xs italic">
+//             No pipeline actions available for status: {order.orderStatus}
+//           </div>
+//         );
+//     }
+//   };
 
-  return (
-    <>
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" onClick={onClose} />
-      <div className="fixed top-0 right-0 h-full w-full max-w-md bg-[#0f1120] border-l border-l-white/[0.07] z-50 flex flex-col overflow-hidden shadow-2xl">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] flex-shrink-0">
-          <div>
-            <div className="flex items-center gap-2 mb-0.5">
-              <span className="text-sm font-bold text-white font-mono">{order.orderNumber}</span>
-              <StatusBadge status={order.orderStatus} />
-            </div>
-            <p className="text-[11px] text-slate-500">{order.createdAt} · {order.items} item{order.items > 1 ? "s" : ""}</p>
-          </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/[0.06] transition-colors">
-            <X size={16} />
-          </button>
-        </div>
+//   return (
+//     <>
+//       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40" onClick={onClose} />
+//       <div className="fixed top-0 right-0 h-full w-full max-w-md bg-[#0f1120] border-l border-l-white/[0.07] z-50 flex flex-col overflow-hidden shadow-2xl">
+//         <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06] flex-shrink-0">
+//           <div>
+//             <div className="flex items-center gap-2 mb-0.5">
+//               <span className="text-sm font-bold text-white font-mono">{order.orderNumber}</span>
+//               <StatusBadge status={order.orderStatus} />
+//             </div>
+//             <p className="text-[11px] text-slate-500">{order.createdAt} · {order.items} item{order.items > 1 ? "s" : ""}</p>
+//           </div>
+//           <button onClick={onClose} className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/[0.06] transition-colors">
+//             <X size={16} />
+//           </button>
+//         </div>
 
-        {/* Main Body */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
-          <section>
-            <h3 className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-3">Customer Details</h3>
-            <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-sm font-bold text-white">{order.customer.name[0]}</div>
-                <div><p className="text-sm font-semibold text-white">{order.customer.name}</p><RiskBadge level={order.risk} /></div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs text-slate-400"><Phone size={12} className="text-slate-600" />{order.customer.phone}</div>
-                {order.customer.email && (
-                  <div className="flex items-center gap-2 text-xs text-slate-400"><Mail size={12} className="text-slate-600" />{order.customer.email}</div>
-                )}
-                <div className="flex items-center gap-2 text-xs text-slate-400"><MapPin size={12} className="text-slate-600" />{order.city}, Pakistan</div>
-              </div>
-            </div>
-          </section>
+//         {/* Main Body */}
+//         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+//           <section>
+//             <h3 className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-3">Customer Details</h3>
+//             <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4">
+//               <div className="flex items-center gap-3 mb-3">
+//                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-sm font-bold text-white">{order.customer.name[0]}</div>
+//                 <div><p className="text-sm font-semibold text-white">{order.customer.name}</p><RiskBadge level={order.risk} /></div>
+//               </div>
+//               <div className="space-y-2">
+//                 <div className="flex items-center gap-2 text-xs text-slate-400"><Phone size={12} className="text-slate-600" />{order.customer.phone}</div>
+//                 {order.customer.email && (
+//                   <div className="flex items-center gap-2 text-xs text-slate-400"><Mail size={12} className="text-slate-600" />{order.customer.email}</div>
+//                 )}
+//                 <div className="flex items-center gap-2 text-xs text-slate-400"><MapPin size={12} className="text-slate-600" />{order.city}, Pakistan</div>
+//               </div>
+//             </div>
+//           </section>
 
-          <section>
-            <h3 className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-3">Courier Details</h3>
-            <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 space-y-2">
-              <div className="flex items-center justify-between text-xs"><span className="text-slate-500">Courier</span><span className="text-slate-300 font-semibold">{order.courier || "—"}</span></div>
-              <div className="flex items-center justify-between text-xs"><span className="text-slate-500">Tracking ID</span><span className="text-slate-300 font-mono">{order.trackingId || "—"}</span></div>
-              <div className="flex items-center justify-between text-xs"><span className="text-slate-500">Shipment Status</span><ShipBadge status={order.shipStatus} /></div>
-              <div className="flex items-center justify-between text-xs"><span className="text-slate-500">Assigned Staff</span><span className="text-slate-300">{order.staff || "—"}</span></div>
-            </div>
-          </section>
+//           <section>
+//             <h3 className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-3">Courier Details</h3>
+//             <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 space-y-2">
+//               <div className="flex items-center justify-between text-xs"><span className="text-slate-500">Courier</span><span className="text-slate-300 font-semibold">{order.courier || "—"}</span></div>
+//               <div className="flex items-center justify-between text-xs"><span className="text-slate-500">Tracking ID</span><span className="text-slate-300 font-mono">{order.trackingId || "—"}</span></div>
+//               <div className="flex items-center justify-between text-xs"><span className="text-slate-500">Shipment Status</span><ShipBadge status={order.shipStatus} /></div>
+//               <div className="flex items-center justify-between text-xs"><span className="text-slate-500">Assigned Staff</span><span className="text-slate-300">{order.staff || "—"}</span></div>
+//             </div>
+//           </section>
 
-          <section>
-            <h3 className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-3">Order Timeline</h3>
-            <div className="relative pl-5">
-              <div className="absolute left-[7px] top-2 bottom-2 w-px bg-white/[0.07]" />
-              {TIMELINE.map(({ event, time, done }, i) => (
-                <div key={i} className="relative flex items-start gap-3 mb-4">
-                  <div className={`absolute -left-5 w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 mt-0.5 ${done ? "bg-amber-400 border-amber-400" : "bg-[#0f1120] border-white/20"}`} />
-                  <div><p className={`text-xs font-semibold ${done ? "text-slate-200" : "text-slate-600"}`}>{event}</p><p className="text-[10px] text-slate-600">{time}</p></div>
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
+//           <section>
+//             <h3 className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-3">Order Timeline</h3>
+//             <div className="relative pl-5">
+//               <div className="absolute left-[7px] top-2 bottom-2 w-px bg-white/[0.07]" />
+//               {TIMELINE.map(({ event, time, done }, i) => (
+//                 <div key={i} className="relative flex items-start gap-3 mb-4">
+//                   <div className={`absolute -left-5 w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 mt-0.5 ${done ? "bg-amber-400 border-amber-400" : "bg-[#0f1120] border-white/20"}`} />
+//                   <div><p className={`text-xs font-semibold ${done ? "text-slate-200" : "text-slate-600"}`}>{event}</p><p className="text-[10px] text-slate-600">{time}</p></div>
+//                 </div>
+//               ))}
+//             </div>
+//           </section>
+//         </div>
 
-        {/* Dynamic Action Sticky Footer */}
-        <div className="px-5 py-4 border-t border-white/[0.06] flex items-center gap-2 flex-shrink-0 bg-[#0d0f1a]">
-          {renderActions()}
-        </div>
-      </div>
-    </>
-  );
-}
+//         {/* Dynamic Action Sticky Footer */}
+//         <div className="px-5 py-4 border-t border-white/[0.06] flex items-center gap-2 flex-shrink-0 bg-[#0d0f1a]">
+//           {renderActions()}
+//         </div>
+//       </div>
+//     </>
+//   );
+// }
 
 // ─────────────────────────────────────────────────────────────
 // ACTION DROPDOWN
@@ -767,166 +758,166 @@ const COLUMNS = [
 // ─────────────────────────────────────────────────────────────
 // ASSIGN COURIER MODAL
 // ─────────────────────────────────────────────────────────────
-function AssignCourierModal({ order, onClose, onAssigned }) {
-  const [couriers, setCouriers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [assigning, setAssigning] = useState(null); // courierId being assigned
-  const [error, setError] = useState("");
-  const { activeStore } = useStore();
+// function AssignCourierModal({ order, onClose, onAssigned }) {
+//   const [couriers, setCouriers] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [assigning, setAssigning] = useState(null); // courierId being assigned
+//   const [error, setError] = useState("");
+//   const { activeStore } = useStore();
 
 
 
 
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
-  }, []);
+//   useEffect(() => {
+//     document.body.style.overflow = "hidden";
+//     return () => { document.body.style.overflow = ""; };
+//   }, []);
 
-  useEffect(() => {
-    const fetchCouriers = async () => {
-      try {
-        const res = await api.get("/courier/get_couriers", {
-          params: { storeId: activeStore?.storeId }
-        });
-        setCouriers(res.data);
-      } catch (err) {
-        setError(err?.response?.data?.message || "Failed to load couriers");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCouriers();
-  }, []);
+//   useEffect(() => {
+//     const fetchCouriers = async () => {
+//       try {
+//         const res = await api.get("/courier/get_couriers", {
+//           params: { storeId: activeStore?.storeId }
+//         });
+//         setCouriers(res.data);
+//       } catch (err) {
+//         setError(err?.response?.data?.message || "Failed to load couriers");
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+//     fetchCouriers();
+//   }, []);
 
-  const handleSelect = async (courier) => {
-    const courierName = courier.courierId?.name || courier.name || "Unknown";
-    setAssigning(courier._id);
-    try {
-      const res = await api.post("/order/assign_order", {
-        courier: courierName,
-        orderNumber: order.orderNumber,
-      }, {
-        params: {
-          storeId: activeStore?.storeId
-        }
-      });
-      onAssigned?.(res.data.message || "Order assigned successfully");
-      onClose();
-    } catch (err) {
-      setError(err?.response?.data?.message || "Failed to assign courier");
-      setAssigning(null);
-    }
-  };
+//   const handleSelect = async (courier) => {
+//     const courierName = courier.courierId?.name || courier.name || "Unknown";
+//     setAssigning(courier._id);
+//     try {
+//       const res = await api.post("/order/assign_order", {
+//         courier: courierName,
+//         orderNumber: order.orderNumber,
+//       }, {
+//         params: {
+//           storeId: activeStore?.storeId
+//         }
+//       });
+//       onAssigned?.(res.data.message || "Order assigned successfully");
+//       onClose();
+//     } catch (err) {
+//       setError(err?.response?.data?.message || "Failed to assign courier");
+//       setAssigning(null);
+//     }
+//   };
 
-  // Courier logo placeholder — initials in a coloured circle
-  const initials = (name = "") =>
-    name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+//   // Courier logo placeholder — initials in a coloured circle
+//   const initials = (name = "") =>
+//     name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
 
-  const colors = [
-    "from-violet-500 to-indigo-600",
-    "from-amber-500 to-orange-600",
-    "from-emerald-500 to-teal-600",
-    "from-blue-500 to-cyan-600",
-    "from-rose-500 to-pink-600",
-  ];
+//   const colors = [
+//     "from-violet-500 to-indigo-600",
+//     "from-amber-500 to-orange-600",
+//     "from-emerald-500 to-teal-600",
+//     "from-blue-500 to-cyan-600",
+//     "from-rose-500 to-pink-600",
+//   ];
 
-  return (
-    <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40" onClick={onClose} />
+//   return (
+//     <>
+//       {/* Backdrop */}
+//       <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40" onClick={onClose} />
 
-      {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-[#0f1120] border border-white/[0.08] rounded-2xl w-full max-w-sm flex flex-col shadow-2xl shadow-black/80">
+//       {/* Modal */}
+//       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+//         <div className="bg-[#0f1120] border border-white/[0.08] rounded-2xl w-full max-w-sm flex flex-col shadow-2xl shadow-black/80">
 
-          {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-blue-400/10 border border-blue-400/20 flex items-center justify-center">
-                <Truck size={14} className="text-blue-400" />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold text-white" style={{ fontFamily: "'Syne',sans-serif" }}>
-                  Assign Courier
-                </h2>
-                <p className="text-[11px] text-slate-500">
-                  Order <span className="font-mono text-slate-400">{order.orderNumber}</span>
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/[0.06] transition-colors"
-            >
-              <X size={16} />
-            </button>
-          </div>
+//           {/* Header */}
+//           <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
+//             <div className="flex items-center gap-3">
+//               <div className="w-8 h-8 rounded-xl bg-blue-400/10 border border-blue-400/20 flex items-center justify-center">
+//                 <Truck size={14} className="text-blue-400" />
+//               </div>
+//               <div>
+//                 <h2 className="text-sm font-bold text-white" style={{ fontFamily: "'Syne',sans-serif" }}>
+//                   Assign Courier
+//                 </h2>
+//                 <p className="text-[11px] text-slate-500">
+//                   Order <span className="font-mono text-slate-400">{order.orderNumber}</span>
+//                 </p>
+//               </div>
+//             </div>
+//             <button
+//               onClick={onClose}
+//               className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-white/[0.06] transition-colors"
+//             >
+//               <X size={16} />
+//             </button>
+//           </div>
 
-          {/* Body */}
-          <div className="px-5 py-4 min-h-[140px] flex flex-col">
-            {loading ? (
-              <div className="flex-1 flex flex-col items-center justify-center gap-2 py-8">
-                <Loader2 size={22} className="animate-spin text-amber-400" />
-                <p className="text-xs text-slate-500">Loading couriers…</p>
-              </div>
-            ) : error ? (
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-red-400/10 border border-red-400/20 text-xs text-red-400">
-                <AlertTriangle size={13} />{error}
-              </div>
-            ) : couriers.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 gap-2">
-                <GitBranch size={22} className="text-slate-600" />
-                <p className="text-xs text-slate-500">No connected couriers found.</p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <p className="text-[11px] text-slate-600 mb-3">
-                  Select a courier to assign this order to:
-                </p>
-                {couriers.map((courier, idx) => {
-                  const name = courier.courierId?.name || courier.name || "Courier";
-                  const isAssigning = assigning === courier._id;
-                  return (
-                    <button
-                      key={courier._id || idx}
-                      onClick={() => handleSelect(courier)}
-                      disabled={!!assigning}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.07] hover:bg-white/[0.07] hover:border-amber-400/30 disabled:opacity-60 disabled:cursor-not-allowed transition-all group"
-                    >
-                      <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${colors[idx % colors.length]} flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0`}>
-                        {initials(name)}
-                      </div>
-                      <div className="flex-1 text-left">
-                        <p className="text-sm font-semibold text-slate-200 group-hover:text-white transition-colors">
-                          {name}
-                        </p>
-                        <p className="text-[10px] text-slate-600">Active integration</p>
-                      </div>
-                      {isAssigning
-                        ? <Loader2 size={14} className="animate-spin text-amber-400 flex-shrink-0" />
-                        : <ChevronRight size={14} className="text-slate-600 group-hover:text-amber-400 transition-colors flex-shrink-0" />
-                      }
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+//           {/* Body */}
+//           <div className="px-5 py-4 min-h-[140px] flex flex-col">
+//             {loading ? (
+//               <div className="flex-1 flex flex-col items-center justify-center gap-2 py-8">
+//                 <Loader2 size={22} className="animate-spin text-amber-400" />
+//                 <p className="text-xs text-slate-500">Loading couriers…</p>
+//               </div>
+//             ) : error ? (
+//               <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-red-400/10 border border-red-400/20 text-xs text-red-400">
+//                 <AlertTriangle size={13} />{error}
+//               </div>
+//             ) : couriers.length === 0 ? (
+//               <div className="flex flex-col items-center justify-center py-8 gap-2">
+//                 <GitBranch size={22} className="text-slate-600" />
+//                 <p className="text-xs text-slate-500">No connected couriers found.</p>
+//               </div>
+//             ) : (
+//               <div className="space-y-2">
+//                 <p className="text-[11px] text-slate-600 mb-3">
+//                   Select a courier to assign this order to:
+//                 </p>
+//                 {couriers.map((courier, idx) => {
+//                   const name = courier.courierId?.name || courier.name || "Courier";
+//                   const isAssigning = assigning === courier._id;
+//                   return (
+//                     <button
+//                       key={courier._id || idx}
+//                       onClick={() => handleSelect(courier)}
+//                       disabled={!!assigning}
+//                       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.07] hover:bg-white/[0.07] hover:border-amber-400/30 disabled:opacity-60 disabled:cursor-not-allowed transition-all group"
+//                     >
+//                       <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${colors[idx % colors.length]} flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0`}>
+//                         {initials(name)}
+//                       </div>
+//                       <div className="flex-1 text-left">
+//                         <p className="text-sm font-semibold text-slate-200 group-hover:text-white transition-colors">
+//                           {name}
+//                         </p>
+//                         <p className="text-[10px] text-slate-600">Active integration</p>
+//                       </div>
+//                       {isAssigning
+//                         ? <Loader2 size={14} className="animate-spin text-amber-400 flex-shrink-0" />
+//                         : <ChevronRight size={14} className="text-slate-600 group-hover:text-amber-400 transition-colors flex-shrink-0" />
+//                       }
+//                     </button>
+//                   );
+//                 })}
+//               </div>
+//             )}
+//           </div>
 
-          {/* Footer */}
-          <div className="px-5 py-3 border-t border-white/[0.06]">
-            <button
-              onClick={onClose}
-              className="w-full py-2 rounded-xl text-xs font-semibold text-slate-400 bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
+//           {/* Footer */}
+//           <div className="px-5 py-3 border-t border-white/[0.06]">
+//             <button
+//               onClick={onClose}
+//               className="w-full py-2 rounded-xl text-xs font-semibold text-slate-400 bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] transition-colors"
+//             >
+//               Cancel
+//             </button>
+//           </div>
+//         </div>
+//       </div>
+//     </>
+//   );
+// }
 
 
 
@@ -958,8 +949,8 @@ export default function AllOrders() {
       });
 
       const fetchedOrders = response?.data?.orders || [];
+      
       // transform backend data into frontend table shape
-
       const formattedOrders = fetchedOrders.map((order) => ({
         orderNumber: order.orderNumber,
 
@@ -985,41 +976,6 @@ export default function AllOrders() {
         courier: order?.courierId?.name || null,
 
         shippedAt: order.shippedAt || null,
-
-        // shipStatus: (() => {
-        //   switch (order.status) {
-        //     case "new":
-        //       return "Pending";
-
-        //     case "verified":
-        //       return "Verified";
-
-        //     case "packed":
-        //       return "Packed";
-
-        //     case "assigned":
-        //       return "Assigned";
-
-        //     case "shipped":
-        //     case "in_transit":
-        //       return "In Transit";
-
-        //     case "delivered":
-        //       return "Delivered";
-
-        //     case "failed_delivery":
-        //       return "Failed";
-
-        //     case "returned":
-        //       return "Returned";
-
-        //     case "cancelled":
-        //       return "Cancelled";
-
-        //     default:
-        //       return "Pending";
-        //   }
-        // })(),
 
         orderStatus: (() => {
           switch (order.status) {
