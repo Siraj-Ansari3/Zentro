@@ -6,10 +6,11 @@ import Order from "../../models/Order.js";
 export const createReturnRequest = async (req, res) => {
 
     try {
-        const { orderId, customerId, refundAmount, reason, initialNote, type } = req.body;
+        const { orderId, customerId, reason, refundAmount, exchangeProductName, initialNote, type } = req.body;
 
         const storeId = req.storeId;
 
+        //Basic validation for required fields
         if (!orderId || !reason || !type) {
             return res.status(400).json({
                 success: false,
@@ -17,23 +18,49 @@ export const createReturnRequest = async (req, res) => {
             });
         }
 
+        if (type !== "RETURN" && type !== "EXCHANGE") {
+            return res.status(400).json({
+                success: false,
+                message: "type must be either 'RETURN' or 'EXCHANGE'."
+            });
+        }
+
+        // Conditional validation based on Type
+        if (type === "RETURN" && refundAmount === undefined) {
+            return res.status(400).json({
+                success: false,
+                message: "refundAmount is required for return requests."
+            });
+        }
+
+        if (type === "EXCHANGE" && !exchangeProductName) {
+            return res.status(400).json({
+                success: false,
+                message: "exchangeProductName is required for exchange requests."
+            });
+        }
+
+        // saves from cross-tenant IDOR(Internal Data Object Reference) attacks
         const order = await Order.findOne({ _id: orderId, storeId });
         if (!order) {
             return res.status(404).json({ message: "Order not found or belongs to another store" });
         }
 
-        if (refundAmount !== undefined && (refundAmount < 0 || refundAmount > order.totalAmount)) {
-            return res.status(400).json({
-                success: false,
-                message: "Refund amount is out of acceptable bounds."
-            });
+        // Validate refundAmount if provided
+        if (type === "RETURN") {
+            if ((!Number.isFinite(refundAmount) || refundAmount < 0 || refundAmount > order.totalAmount)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Refund amount is out of acceptable bounds."
+                });
+            }
         }
 
         // Prevent returning orders that haven't been delivered or are already cancelled
         if (order.status !== "delivered") {
             return res.status(400).json({
                 success: false,
-                message: `Cannot create a return for an order with status: ${order.status}`
+                message: `Cannot create a return or exchange for an order with status: ${order.status}`
             });
         }
 
@@ -48,29 +75,43 @@ export const createReturnRequest = async (req, res) => {
         if (existingReturn) {
             return res.status(409).json({
                 success: false,
-                message: "An active return request already exists for this order."
+                message: "An active return request or exchange already exists for this order."
             });
         }
 
-        const newReturnRequest = new ReturnRequest({
+
+        // We create a base payload, then add type-specific fields.
+        const requestPayload = {
             orderId,
             storeId,
             customerId: order.customerId,
             reason,
-            refundAmount,
-            // initialNote,
             createdBy: req.user.id,
-            type
-        });
+            type,
+            // initialNote: initialNote // Uncomment if you are using this
+        };
 
+        if (type === "RETURN") {
+            requestPayload.refundAmount = refundAmount;
+        } else if (type === "EXCHANGE") {
+            requestPayload.exchangeProductName = exchangeProductName;
+        }
+
+        const newReturnRequest = new ReturnRequest(requestPayload);
         await newReturnRequest.save();
 
-
-
-
-        res.status(201).json({ message: "Return request created successfully", data: newReturnRequest });
+        return res.status(201).json({
+            success: true,
+            message: `${type === 'RETURN' ? 'Return' : 'Exchange'} request created successfully.`,
+            data: newReturnRequest
+        });
     } catch (error) {
-        console.error("Error creating return request:", error);
+        console.error({
+            controller: "createReturnRequest",
+            storeId: storeId,
+            userId: req.user.id,
+            "Error creating return request:": error
+        });
         res.status(500).json({ message: "Failed to create return request" });
     }
 }
@@ -104,7 +145,7 @@ export const fetchReturnRequests = async (req, res) => {
             .limit(limit) // Pagination step 2: Cap the payload size
             .lean();
 
-
+        //calculate totalrecords for pagination metadata, very fast.
         const totalRecords = await ReturnRequest.countDocuments({ storeId });
 
         return res.status(200).json({
@@ -120,7 +161,12 @@ export const fetchReturnRequests = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error fetching return request:", error);
+        console.error({
+            controller: "fetchReturnRequests",
+            storeId: storeId,
+            userId: req.user.id,
+            "Error fetching return request:": error
+        });
         res.status(500).json({ message: "Failed to fetch return request" });
     }
 }
@@ -137,6 +183,7 @@ export const updateReturnRequestStatus = async (req, res) => {
             });
         }
 
+        //saves from cross-tenant IDOR(Internal Data Object Reference) attacks
         const requestDoc = await ReturnRequest.findOne({ _id: requestId, storeId });
         if (!requestDoc) {
             return res.status(404).json({
@@ -144,10 +191,11 @@ export const updateReturnRequestStatus = async (req, res) => {
                 message: "Return request not found within this store's isolation scope."
             });
         }
-        
+
         //store the previous status before updating to decide if we need to increment or decrement the metrics
         const previousStatus = requestDoc.status;
 
+        // Prevent redundant updates
         if (status === requestDoc.status) {
             return res.status(400).json({
                 success: false,
@@ -155,11 +203,17 @@ export const updateReturnRequestStatus = async (req, res) => {
             });
         }
 
+        // Update the status and save
+        requestDoc.updatedBy = req.user.id;
+        requestDoc.updatedAt = new Date();
         requestDoc.status = status;
         const updatedRequest = await requestDoc.save();
 
 
+        //get valid customerId from the updated request to update metrics
         const targetCustomerId = updatedRequest.customerId;
+
+        // Update metrics only if the request has a valid customerId and the status transition is relevant
         if (targetCustomerId) {
             // Scenario A: It just became APPROVED -> INCREMENT metrics
             if (previousStatus !== "APPROVED" && status === "APPROVED") {
@@ -187,7 +241,12 @@ export const updateReturnRequestStatus = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Return Pipeline Transition Failure:", error.message);
+        console.error({
+            controller: "updateReturnRequestStatus",
+            storeId: storeId,
+            userId: req.user.id,
+            "Return Pipeline Transition Failure:": error.message
+        });
         return res.status(500).json({
             success: false,
             message: "Internal system error updating return request pipeline status."

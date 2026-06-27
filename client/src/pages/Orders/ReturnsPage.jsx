@@ -6,9 +6,12 @@ import {
   Package, Tag, CreditCard, ClipboardList, StickyNote, Send,
   Plus, Trash2, PackagePlus, FileText,
 } from "lucide-react";
+
 import StatusBadge, {STATUS_CONFIG} from "../../components/Badges/StatusBadge";
 import ReturnTypeBadge, { TYPE_CONFIG }  from "../../components/Badges/ReturnTypeBadge";
 import FilterPill from "../../components/Filters/FilterPill";
+
+
 import api from "../../api/axios";         // adjust path as needed
 import { useStore } from "../../context/StoreContext"; // adjust path as needed
 
@@ -311,10 +314,14 @@ function ReturnDetailsDrawer({ request, storeId, onClose, onStatusChange }) {
   useEffect(() => {
     if (!request?._id) return;
     setLoading(true);
-    api.get(`/returns/${request._id}`, { params: { storeId } })
-      .then((r) => setDetail(r.data))
-      .catch(() => setDetail(request)) // fallback to row data
-      .finally(() => setLoading(false));
+    // api.get(`/returns/${request._id}`, { params: { storeId } })
+    //   .then((r) => setDetail(r.data))
+    //   .catch(() => 
+        setDetail(request)
+    // ) // fallback to row data
+    //   .finally(() => 
+    setLoading(false)
+  // );
   }, [request?._id, storeId]);
 
   const data = detail || request;
@@ -376,7 +383,7 @@ function ReturnDetailsDrawer({ request, storeId, onClose, onStatusChange }) {
               <section>
                 <h3 className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-2.5">Request Details</h3>
                 <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 space-y-2.5">
-                  <Row label="Type"><TypeBadge type={data?.type} /></Row>
+                  <Row label="Type"><ReturnTypeBadge type={data?.type} /></Row>
                   <Row label="Status"><StatusBadge status={data?.status} /></Row>
                   <Row label="Reason"><span className="text-xs text-slate-300">{data?.reason || "—"}</span></Row>
                   <Row label="Refund Amount">
@@ -570,7 +577,7 @@ function CreateReturnModal({ onClose, onCreated, storeId }) {
       setOrderLookup({ loading: true, data: null, error: "" });
       try {
         const res = await api.get("/order/get_order", {
-          params: { storeId, search: num,  },
+          params: { storeId, orderNumber: num,  },
         });
         const found = res.data?.order || null;
         setOrderLookup({

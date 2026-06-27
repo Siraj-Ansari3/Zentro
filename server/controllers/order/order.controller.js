@@ -695,23 +695,50 @@ export const getReadyToShipOrders = async (req, res) => {
 };
 
 export const getOrder = async (req, res) => {
+  
+  const storeId = req.storeId;
+
+  const { orderNumber } = req.query;
 
   try {
 
-    const storeId = req.storeId;
+    // Validate that a search query is provided
+    if (!orderNumber || orderNumber.trim() === "") {
+      return res.status(400).json({
+        success: false,
+        message: "Order number is required",
+      })
+    }
 
-    const { search } = req.query;
+    // Clean the order number to avoid leading/trailing whitespace issues
+    const cleanOrderNumber = orderNumber.trim();
 
-    const order = await Order.findOne({ storeId, orderNumber: search })
+    const order = await Order.findOne({ storeId, orderNumber: cleanOrderNumber }).lean();
+
+    // If order is not found, return a 404 response
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      })
+    }
 
     return res.status(200).json({
-      order: order
+      success: true,
+      order
     })
 
   } catch (error) {
-    console.log("failed to get order")
+    console.error({
+      controller: "getOrder",
+      storeId,
+      userId: req.user.id,
+      orderNumber,
+      error
+    });
     return res.status(500).json({
-      error: error.message
-    })
+      success: false,
+      message: "An internal server error occurred while retrieving the order."
+    });
   }
 }
