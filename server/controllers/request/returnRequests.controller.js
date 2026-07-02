@@ -119,15 +119,23 @@ export const createReturnRequest = async (req, res) => {
 
 export const fetchReturnRequests = async (req, res) => {
 
-    try {
+    const storeId = req.storeId;
 
-        const storeId = req.storeId;
+    try {
+        const { status } = req.query; // Optional filter by status
+        console.log("Store ID:", storeId); // Debugging line to check storeId
 
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 50;
         const skip = (page - 1) * limit;
 
-        const requests = await ReturnRequest.find({ storeId })
+        const dbQuery = { storeId };
+
+
+        if (status) {
+            dbQuery.status = status;
+        }
+        const requests = await ReturnRequest.find(dbQuery)
             .populate({
                 path: "orderId",
                 select: "orderNumber shippingAddress.phone shippingAddress.fullName shippingAddress.city totalAmount"
@@ -146,7 +154,7 @@ export const fetchReturnRequests = async (req, res) => {
             .lean();
 
         //calculate totalrecords for pagination metadata, very fast.
-        const totalRecords = await ReturnRequest.countDocuments({ storeId });
+        const totalRecords = await ReturnRequest.countDocuments(dbQuery);
 
         return res.status(200).json({
             success: true,

@@ -25,7 +25,7 @@ const returnRequestSchema = new mongoose.Schema({
         enum: [
             "RETURN",
             "EXCHANGE",
-            "REFUND",
+            // "REFUND",
             "CANCELLED_AFTER_CONFIRMATION",
             "DAMAGED_ITEM",
             "WRONG_ITEM",
