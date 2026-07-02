@@ -1021,14 +1021,6 @@ export default function ReturnsPage() {
     }
   };
 
-  // ─────────────────────────────────────
-  // TYPE FILTER PILLS
-  // ─────────────────────────────────────
-  const typeOptions = [
-    { key: "all",      label: "All types",  activeCls: "border-amber-400 text-amber-400 bg-amber-400/10" },
-    { key: "RETURN",   label: "Returns",    activeCls: "border-blue-400 text-blue-400 bg-blue-400/10" },
-    { key: "EXCHANGE", label: "Exchanges",  activeCls: "border-violet-400 text-violet-400 bg-violet-400/10" },
-  ];
 
   // ─────────────────────────────────────
   // RENDER
@@ -1060,31 +1052,9 @@ export default function ReturnsPage() {
       {/* ── Stat Cards ── */}
       <StatCards stats={stats} loading={statsLoading} />
 
-      {/* ── Type Filter Tabs ── */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 mb-3">
-        {typeOptions.map((t) => (
-          <FilterPill
-            key={t.key}
-            label={t.label}
-            active={typeFilter === t.key}
-            onClick={() => setTypeFilter(t.key)}
-            activeCls={t.activeCls}
-          />
-        ))}
-      </div>
 
 
-{/* --------- develope these features---------------- */}
-      <div>
-        <button>refunds pending</button>
-        <button>refunds paid</button>
-      </div>
 
-      <div>
-        <button>Exchanges Dispactched</button>
-        <button>Exchanges Delivered</button>
-      </div>
-{/* ------------------------------------------------- */}
 
       {/* ── Search + Status Filter ── */}
       <div className="flex flex-col sm:flex-row gap-2 mb-4">
